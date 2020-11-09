@@ -1,0 +1,19 @@
+{
+    "name": "fmizzell/rooted-data",
+    "require": {
+        "phpunit/phpunit": "^9.4",
+        "opis/json-schema": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "RootedData\\": "src/",
+            "RootedDataTest\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "fmizzell",
+            "email": "fmizzell.dev@gmail.com"
+        }
+    ]
+}
