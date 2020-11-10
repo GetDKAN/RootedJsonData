@@ -127,4 +127,20 @@ class RootedDatatTest extends TestCase {
     $data->number = "Alice";
   }
 
+  public function testArrayManipulations() {
+    $json = json_encode(['array' => []]);
+    $data = new RootedData($json);
+    //$data->array[] = "hello";
+
+    /*$data->array2 = [];
+    $data->array2[] = "good bye";
+
+    $data->set('.array2', []);*/
+
+    $data[] = [];
+    var_dump($data[0]);
+    $data[0][] = "Hello";
+    $this->assertEquals("Hello", $data[0][0]);
+  }
+
 }
