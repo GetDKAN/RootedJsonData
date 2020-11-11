@@ -1,14 +1,15 @@
 <?php
 
-
 namespace RootedData;
 
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
+use Opis\JsonSchema\ValidationResult;
 
 /**
- * [Description RootedData]
+ * RootedJsonData class. Instantiate for a service-like object for working with
+ * JSON.
  */
 class RootedJsonData
 {
@@ -16,6 +17,14 @@ class RootedJsonData
     private $schema;
     private $data;
 
+    /**
+     * Constructor method.
+     *
+     * @param string $json
+     *   String of JSON data.
+     * @param string $schema
+     *   JSON schema document for validation.
+     */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
         $decoded = json_decode($json);
@@ -38,18 +47,41 @@ class RootedJsonData
         $this->data = $data;
     }
 
-    public static function validate(JsonObject $data, Schema $schema)
+    /**
+     * Validate a JsonObject.
+     *
+     * @param JsonPath\JsonObject $data
+     *   JsonData object to validate against schema.
+     * @param Opis\JsonSchema\Schema $schema
+     *   And Opis Json-Schema schema object to validate data against.
+     *
+     * @return Opis\JsonSchema\ValidationResult
+     *   Validation result object, contains error report if invalid.
+     */
+    public static function validate(JsonObject $data, Schema $schema): ValidationResult
     {
         $validator = new Validator();
         $result = $validator->schemaValidation(json_decode("{$data}"), $schema);
         return $result;
     }
 
+    /**
+     * String version of object is the string version of the JsonObject.
+     *
+     * @return string
+     */
     public function __toString()
     {
         return (string) $this->data;
     }
 
+    /**
+     * @param string $path
+     *   JSON Path
+     *
+     * @return mixed
+     *   Result of JsonPath\JsonObject::__get()
+     */
     public function get($path)
     {
         $result = $this->data->get($path);
@@ -59,11 +91,27 @@ class RootedJsonData
         return $result;
     }
 
-    public function __get($jsonPath)
+    /**
+     * @see JsonPath\JsonObject::__get()
+     *
+     * @param string $path
+     *
+     * @return mixed
+     *   Result of JsonPath\JsonObject::__get()
+     */
+    public function __get($path)
     {
-        return $this->data->get($jsonPath);
+        return $this->data->get($path);
     }
 
+    /**
+     * Set JSON Path to value.
+     *
+     * @param string $path
+     * @param mixed $value
+     *
+     * @return JsonPath\JsonObject
+     */
     public function set($path, $value)
     {
         $validationJsonObject = new JsonObject((string) $this->data);
@@ -78,8 +126,16 @@ class RootedJsonData
         return $this->data->set($path, $value);
     }
 
-    public function __set($jsonPath, $value)
+    /**
+     * @see JsonPath\JsonObject::__get()
+     *
+     * @param mixed $path
+     * @param mixed $value
+     *
+     * @return JsonPath\JsonObject
+     */
+    public function __set($path, $value)
     {
-        return $this->data->set($jsonPath, $value);
+        return $this->data->set($path, $value);
     }
 }
