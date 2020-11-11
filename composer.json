@@ -2,7 +2,8 @@
     "name": "fmizzell/rooted-data",
     "require": {
         "phpunit/phpunit": "^9.4",
-        "opis/json-schema": "^1.0"
+        "opis/json-schema": "^1.0",
+        "galbar/jsonpath": "^1.1"
     },
     "autoload": {
         "psr-4": {

@@ -25,48 +25,29 @@ class RootedDatatTest extends TestCase {
    * Test array manipulations
    */
 
-  public function testNestedObject() {
-    $json = json_encode([
-      "publisher" => [
-        "name" => "Frank"
-      ]
-    ]);
-
-    $data = new RootedData($json);
-
-    $this->assertEquals($json, (string) $data);
-
-    $this->assertInstanceOf(RootedData::class, $data->publisher);
-
-    $publisher = $data->publisher;
-    $publisher->name = "Alice";
-
-    $json2 = json_encode([
-      "publisher" => [
-        "name" => "Alice"
-      ]
-    ]);
-
-    $this->assertEquals($json2, "{$data}");
-  }
-
   public function testSeamlessExperience() {
 
     // we want a seemless experience between json strings and their structure they represent.
     $data = new RootedData();
-    $data->title = "Hello";
+    $data->set("$.title", "Hello");
     $this->assertEquals('{"title":"Hello"}', "{$data}");
 
-    $data->publisher = new RootedData();
-    $data->publisher->name = "Frank";
+    $data->set("$.publisher.name", "Frank");
 
     $this->assertEquals('{"title":"Hello","publisher":{"name":"Frank"}}', (string) $data);
   }
 
-  public function testAccessToNonExistentProperties() {
-    $this->expectExceptionMessage("Property city is not set");
+  public function testMagicGetterAndSetter() {
     $data = new RootedData();
-    $city = $data->city;
+    $data->{"$.title"} = "Hello";
+    $this->assertEquals('{"title":"Hello"}', "{$data}");
+    $this->assertEquals("Hello", $data->{"$.title"});
+  }
+
+  public function testAccessToNonExistentProperties() {
+    $this->expectExceptionMessage("Property $.city is not set");
+    $data = new RootedData();
+    $city = $data->get("$.city");
   }
 
   public function testJsonFormat() {
@@ -112,7 +93,7 @@ class RootedDatatTest extends TestCase {
   }
 
   public function testJsonIntegrityFailureAfterChange() {
-    $this->expectExceptionMessage("number expects a number");
+    $this->expectExceptionMessage("\$.number expects a number");
 
     $json = '{"number":51}';
     $schema = '{
@@ -124,23 +105,20 @@ class RootedDatatTest extends TestCase {
     $data = new RootedData($json, $schema);
     $this->assertEquals($json, "{$data}");
 
-    $data->number = "Alice";
+    $data->set("$.number", "Alice");
   }
 
-  public function testArrayManipulations() {
-    $json = json_encode(['array' => []]);
+  public function testJsonPathGetter() {
+    $json = '{"container":{"number":51}}';
     $data = new RootedData($json);
-    //$data->array[] = "hello";
+    $this->assertEquals(51, $data->get("$.container.number"));
+  }
 
-    /*$data->array2 = [];
-    $data->array2[] = "good bye";
-
-    $data->set('.array2', []);*/
-
-    $data[] = [];
-    var_dump($data[0]);
-    $data[0][] = "Hello";
-    $this->assertEquals("Hello", $data[0][0]);
+  public function testJsonPathSetter() {
+    $json = '{"container":{"number":51}}';
+    $data = new RootedData($json);
+    $data->set("$.container.number", 52);
+    $this->assertEquals(52, $data->get("$.container.number"));
   }
 
 }
