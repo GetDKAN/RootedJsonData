@@ -1,5 +1,8 @@
 {
-    "name": "fmizzell/rooted-data",
+    "name": "getdkan/rooted-data",
+    "description": "Access and modify JSON-based data objects while enforcing JSON Schema",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
     "require": {
         "phpunit/phpunit": "^9.4",
         "opis/json-schema": "^1.0",
@@ -15,6 +18,11 @@
         {
             "name": "fmizzell",
             "email": "fmizzell.dev@gmail.com"
+        },
+        {
+            "name": "Dan Feder",
+            "email": "dafeder@mailbox.org"
         }
+
     ]
 }
