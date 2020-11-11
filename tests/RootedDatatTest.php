@@ -5,7 +5,7 @@ namespace RootedDataTest;
 
 
 use PHPUnit\Framework\TestCase;
-use RootedData\RootedData;
+use RootedData\RootedJsonData;
 
 class RootedDatatTest extends TestCase {
 
@@ -28,7 +28,7 @@ class RootedDatatTest extends TestCase {
   public function testSeamlessExperience() {
 
     // we want a seemless experience between json strings and their structure they represent.
-    $data = new RootedData();
+    $data = new RootedJsonData();
     $data->set("$.title", "Hello");
     $this->assertEquals('{"title":"Hello"}', "{$data}");
 
@@ -38,7 +38,7 @@ class RootedDatatTest extends TestCase {
   }
 
   public function testMagicGetterAndSetter() {
-    $data = new RootedData();
+    $data = new RootedJsonData();
     $data->{"$.title"} = "Hello";
     $this->assertEquals('{"title":"Hello"}', "{$data}");
     $this->assertEquals("Hello", $data->{"$.title"});
@@ -46,7 +46,7 @@ class RootedDatatTest extends TestCase {
 
   public function testAccessToNonExistentProperties() {
     $this->expectExceptionMessage("Property $.city is not set");
-    $data = new RootedData();
+    $data = new RootedJsonData();
     $city = $data->get("$.city");
   }
 
@@ -54,7 +54,7 @@ class RootedDatatTest extends TestCase {
     // We want our data to keep its integrity in the in-betweens: From input to output.
     $this->expectExceptionMessage("Fix your JSON");
     $json = "{";
-    new RootedData($json);
+    new RootedJsonData($json);
   }
 
   public function testJsonIntegrityFailure() {
@@ -66,7 +66,7 @@ class RootedDatatTest extends TestCase {
         "number":      { "type": "number" }
       }
     }';
-    new RootedData($json, $schema);
+    new RootedJsonData($json, $schema);
   }
 
   public function testSchemaIntegrity() {
@@ -77,7 +77,7 @@ class RootedDatatTest extends TestCase {
       "properties": {
         "number":      { "type": "number" }
       }';
-    new RootedData($json, $schema);
+    new RootedJsonData($json, $schema);
   }
 
   public function testJsonIntegrity() {
@@ -88,7 +88,7 @@ class RootedDatatTest extends TestCase {
         "number":      { "type": "number" }
       }
     }';
-    $data = new RootedData($json, $schema);
+    $data = new RootedJsonData($json, $schema);
     $this->assertEquals($json, "{$data}");
   }
 
@@ -102,7 +102,7 @@ class RootedDatatTest extends TestCase {
         "number":      { "type": "number" }
       }
     }';
-    $data = new RootedData($json, $schema);
+    $data = new RootedJsonData($json, $schema);
     $this->assertEquals($json, "{$data}");
 
     $data->set("$.number", "Alice");
@@ -110,13 +110,13 @@ class RootedDatatTest extends TestCase {
 
   public function testJsonPathGetter() {
     $json = '{"container":{"number":51}}';
-    $data = new RootedData($json);
+    $data = new RootedJsonData($json);
     $this->assertEquals(51, $data->get("$.container.number"));
   }
 
   public function testJsonPathSetter() {
     $json = '{"container":{"number":51}}';
-    $data = new RootedData($json);
+    $data = new RootedJsonData($json);
     $data->set("$.container.number", 52);
     $this->assertEquals(52, $data->get("$.container.number"));
   }

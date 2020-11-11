@@ -7,7 +7,10 @@ use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
 
-class RootedData {
+/**
+ * [Description RootedData]
+ */
+class RootedJsonData {
 
   private $schema;
   private $data;
