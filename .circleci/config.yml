@@ -13,7 +13,7 @@ jobs:
           command: |
             sudo composer self-update
             composer install -n --prefer-dist
-            pecl channel-update pecl.php.net && pecl install xdebug && docker-php-ext-enable xdebug
+            sudo pecl channel-update pecl.php.net && sudo pecl install xdebug && docker-php-ext-enable xdebug
       - run:
           name: Setup Code Climate test-reporter
           command: |
