@@ -5,6 +5,8 @@ namespace RootedDataTest;
 
 use PHPUnit\Framework\TestCase;
 use RootedData\RootedJsonData;
+use Opis\JsonSchema\Exception\InvalidSchemaException;
+use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
 {
@@ -37,40 +39,35 @@ class RootedJsonDataTest extends TestCase
     public function testJsonFormat()
     {
       // We want our data to keep its integrity in the in-betweens: From input to output.
-        $this->expectExceptionMessage("Fix your JSON");
+        $this->expectExceptionMessage("Invalid JSON: Syntax error");
         $json = "{";
         new RootedJsonData($json);
     }
 
     public function testJsonIntegrityFailure()
     {
-        $this->expectExceptionMessage("Fix your JSON");
         $json = '{"number":"hello"}';
         $schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
-        new RootedJsonData($json, $schema);
+        try {
+            new RootedJsonData($json, $schema);
+        } catch (ValidationException $e) {
+            $this->assertInstanceOf(ValidationException::class, $e);
+            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+        }
     }
 
     public function testSchemaIntegrity()
     {
-        $this->expectExceptionMessage("Fix your Schema");
+        $this->expectException(InvalidSchemaException::class);
         $json = '{"number":"hello"}';
-        $schema = '{
-      "type": "object",
-      "properties": {
-        "number":      { "type": "number" }
-      }';
+        $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
     }
 
     public function testJsonIntegrity()
     {
         $json = '{"number":51}';
-        $schema = '{
-      "type": "object",
-      "properties": {
-        "number":      { "type": "number" }
-      }
-    }';
+        $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
         $this->assertEquals($json, "{$data}");
     }
@@ -80,12 +77,7 @@ class RootedJsonDataTest extends TestCase
         $this->expectExceptionMessage("\$.number expects a number");
 
         $json = '{"number":51}';
-        $schema = '{
-      "type": "object",
-      "properties": {
-        "number":      { "type": "number" }
-      }
-    }';
+        $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
         $this->assertEquals($json, "{$data}");
 
