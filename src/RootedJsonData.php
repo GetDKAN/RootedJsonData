@@ -6,6 +6,7 @@ use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
 use Opis\JsonSchema\ValidationResult;
+use RootedData\Exception\ValidationException;
 
 /**
  * RootedJsonData class. Instantiate for a service-like object for working with
@@ -30,18 +31,15 @@ class RootedJsonData
         $decoded = json_decode($json);
 
         if (!isset($decoded)) {
-            throw new \Exception("Fix your JSON");
+            throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        try {
-            $this->schema = Schema::fromJsonString($schema);
-        } catch (\Exception $e) {
-            throw new \Exception("Fix your Schema");
-        }
+        $this->schema = Schema::fromJsonString($schema);
 
         $data = new JsonObject($json, true);
-        if (!self::validate($data, $this->schema)->isValid()) {
-            throw new \Exception("Fix your JSON");
+        $result = self::validate($data, $this->schema);
+        if (!$result->isValid()) {
+            throw new ValidationException("JSON Schema validation failed.", $result);
         }
 
         $this->data = $data;
@@ -120,7 +118,8 @@ class RootedJsonData
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
             $keywordArgs = $result->getFirstError()->keywordArgs();
-            throw new \Exception("{$path} expects a {$keywordArgs['expected']}");
+            $message = "{$path} expects a {$keywordArgs['expected']}";
+            throw new ValidationException($message, $result);
         }
 
         return $this->data->set($path, $value);
