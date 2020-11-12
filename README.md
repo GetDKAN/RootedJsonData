@@ -15,4 +15,8 @@ $data = new RootedJsonData($json, $schema);
 echo $data->{"$.number"}; // 3
 echo "{$data}"; // {"number":3}
 $data->{"$.number"} = "three"; // EXCEPTION
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> c98c3a0 (Examples)
