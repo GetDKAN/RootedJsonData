@@ -1,8 +1,8 @@
 version: 2.0
 jobs:
   build:
-    # environment:
-    #   CC_TEST_REPORTER_ID: fd300001221c40670d47ac5248c8cdaf054c6549c83634ea79b5aad18a10cab7
+    environment:
+      CC_TEST_REPORTER_ID: 8ec926841c6dfead9c848fd063c569e11b06be11442a8175d588e10607ee2150
     docker:
       - image: circleci/php:7-cli-node-browsers-legacy
     working_directory: ~/repo
@@ -13,16 +13,14 @@ jobs:
           command: |
             sudo composer self-update
             composer install -n --prefer-dist
-      # - run:
-          # name: Setup Code Climate test-reporter
-          # command: |
-          #   curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          #   chmod +x ./cc-test-reporter
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
       - run:
           name: Run tests
-          # command: |
-          #   ./cc-test-reporter before-build
-          #   vendor/bin/phpunit --testsuite all --coverage-clover clover.xml
-          #   ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
           command: |
-            vendor/bin/phpunit --testsuite all
+            ./cc-test-reporter before-build
+            vendor/bin/phpunit --testsuite all --coverage-clover clover.xml
+            ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
