@@ -46,12 +46,7 @@ class RootedJsonDataTest extends TestCase
     {
         $this->expectExceptionMessage("Fix your JSON");
         $json = '{"number":"hello"}';
-        $schema = '{
-      "type": "object",
-      "properties": {
-        "number":      { "type": "number" }
-      }
-    }';
+        $schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
         new RootedJsonData($json, $schema);
     }
 

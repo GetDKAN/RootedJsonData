@@ -9,4 +9,10 @@ This library primarily wires together [JsonPath-PHP](https://github.com/Galbar/J
 Example:
 
 ```php
-$json = '{}';
+$json = '{"number":3}';
+$schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
+$data = new RootedJsonData($json, $schema);
+echo $data->{"$.number"}; // 3
+echo "{$data}"; // {"number":3}
+$data->{"$.number"} = "three"; // EXCEPTION
+```
