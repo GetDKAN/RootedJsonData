@@ -4,7 +4,7 @@ jobs:
     environment:
       CC_TEST_REPORTER_ID: 8ec926841c6dfead9c848fd063c569e11b06be11442a8175d588e10607ee2150
     docker:
-      - image: circleci/php:7-cli-node-browsers-legacy
+      - image: cimg/php:7.2
     working_directory: ~/repo
     steps:
       - checkout
