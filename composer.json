@@ -4,10 +4,12 @@
     "type": "library",
     "license": "GPL-3.0-or-later",
     "require": {
-        "phpunit/phpunit": "^9.4",
         "opis/json-schema": "^1.0",
         "galbar/jsonpath": "^1.1"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^9.4"
+    }
     "autoload": {
         "psr-4": {
             "RootedData\\": "src/",
