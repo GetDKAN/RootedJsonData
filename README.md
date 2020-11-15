@@ -13,6 +13,7 @@ $json = '{"number":3}';
 $schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
 $data = new RootedJsonData($json, $schema);
 echo $data->{"$.number"}; // 3
+echo $data->{"$[number]"}; // 3
 echo "{$data}"; // {"number":3}
 $data->{"$.number"} = "three"; // EXCEPTION
 ```

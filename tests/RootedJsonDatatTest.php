@@ -29,6 +29,14 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals("Hello", $data->{"$.title"});
     }
 
+    public function testBracketSyntax()
+    {
+        $data = new RootedJsonData();
+        $data->{"$[title]"} = "Hello";
+        $this->assertEquals('{"title":"Hello"}', "{$data}");
+        $this->assertEquals("Hello", $data->{"$[title]"});
+    }
+
     public function testAccessToNonExistentProperties()
     {
         $this->expectExceptionMessage("Property $.city is not set");
@@ -82,6 +90,10 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals($json, "{$data}");
 
         $data->set("$.number", "Alice");
+
+        // Test with magic setter as well.
+        $this->expectExceptionMessage("\$[number] expects a number");
+        $data->{"$[number]"} = "Alice";
     }
 
     public function testJsonPathGetter()
