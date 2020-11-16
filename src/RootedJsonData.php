@@ -99,7 +99,7 @@ class RootedJsonData
      */
     public function __get($path)
     {
-        return $this->data->get($path);
+        return $this->get($path);
     }
 
     /**
@@ -126,7 +126,7 @@ class RootedJsonData
     }
 
     /**
-     * @see JsonPath\JsonObject::__get()
+     * @see JsonPath\JsonObject::__set()
      *
      * @param mixed $path
      * @param mixed $value
@@ -135,6 +135,6 @@ class RootedJsonData
      */
     public function __set($path, $value)
     {
-        return $this->data->set($path, $value);
+        return $this->set($path, $value);
     }
 }
