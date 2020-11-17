@@ -82,11 +82,10 @@ class RootedJsonData
      */
     public function get($path)
     {
-        $result = $this->data->get($path);
-        if ($result === false) {
-            throw new \Exception("Property {$path} is not set");
+        if ($this->__isset($path) === false) {
+            return null;
         }
-        return $result;
+        return $this->data->get($path);
     }
 
     /**
@@ -99,7 +98,7 @@ class RootedJsonData
      */
     public function __get($path)
     {
-        return $this->get($path);
+        return $this->data->get($path);
     }
 
     /**
@@ -126,7 +125,7 @@ class RootedJsonData
     }
 
     /**
-     * @see JsonPath\JsonObject::__set()
+     * @see JsonPath\JsonObject::__get()
      *
      * @param mixed $path
      * @param mixed $value
@@ -135,6 +134,16 @@ class RootedJsonData
      */
     public function __set($path, $value)
     {
-        return $this->set($path, $value);
+        return $this->data->set($path, $value);
+    }
+
+    public function __isset($name)
+    {
+        $notSmart = new JsonObject("{$this->data}");
+        return $notSmart->get($name) ? true : false;
+    }
+
+    public function getSchema() {
+        return $this->schema;
     }
 }
