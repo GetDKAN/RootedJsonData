@@ -117,6 +117,6 @@ class RootedJsonDataTest extends TestCase
         $json = '{"number":51}';
         $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
-        $this->assertInstanceOf(Schema::class, $data->getSchema());
+        $this->assertEquals($schema, $data->getSchema());
     }
 }
