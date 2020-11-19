@@ -128,7 +128,7 @@ class RootedJsonData
     }
 
     /**
-     * @see JsonPath\JsonObject::__get()
+     * @see JsonPath\JsonObject::__set()
      *
      * @param mixed $path
      * @param mixed $value
@@ -140,13 +140,27 @@ class RootedJsonData
         return $this->data->set($path, $value);
     }
 
-    public function __isset($name)
+    /**
+     * Check if a property or path is set.
+     *
+     * @param string $path
+     *   Path to check.
+     *
+     * @return bool
+     * /
+    public function __isset(string $path)
     {
         $notSmart = new JsonObject("{$this->data}");
         return $notSmart->get($name) ? true : false;
     }
 
-    public function getSchema() {
+    /**
+     * Get the JSON Schema for the JSON.
+     *
+     * @return string
+     * /
+    public function getSchema()
+    {
         return $this->schema;
     }
 }
