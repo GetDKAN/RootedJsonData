@@ -6,6 +6,7 @@ namespace RootedDataTest;
 use PHPUnit\Framework\TestCase;
 use RootedData\RootedJsonData;
 use Opis\JsonSchema\Exception\InvalidSchemaException;
+use Opis\JsonSchema\Schema;
 use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
@@ -39,9 +40,9 @@ class RootedJsonDataTest extends TestCase
 
     public function testAccessToNonExistentProperties()
     {
-        $this->expectExceptionMessage("Property $.city is not set");
         $data = new RootedJsonData();
-        $city = $data->get("$.city");
+        $this->assertNull($data->get("$.city"));
+        $this->assertFalse(isset($data->{"$.city"}));
     }
 
     public function testJsonFormat()
@@ -109,5 +110,13 @@ class RootedJsonDataTest extends TestCase
         $data = new RootedJsonData($json);
         $data->set("$.container.number", 52);
         $this->assertEquals(52, $data->get("$.container.number"));
+    }
+
+    public function testSchemaGetter()
+    {
+        $json = '{"number":51}';
+        $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
+        $data = new RootedJsonData($json, $schema);
+        $this->assertEquals($schema, $data->getSchema());
     }
 }
