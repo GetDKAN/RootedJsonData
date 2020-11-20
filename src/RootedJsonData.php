@@ -149,7 +149,8 @@ class RootedJsonData
         return $notSmart->get($name) ? true : false;
     }
 
-    public function getSchema() {
+    public function getSchema()
+    {
         return $this->schema;
     }
 }
