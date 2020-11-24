@@ -112,6 +112,7 @@ class RootedJsonData
      */
     public function set($path, $value)
     {
+        $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->set($path, $value);
 
@@ -123,6 +124,13 @@ class RootedJsonData
         }
 
         return $this->data->set($path, $value);
+    }
+
+    private function normalizeSetValue(&$value)
+    {
+        if ($value instanceof RootedJsonData) {
+            $value = $value->{"$"};
+        }
     }
 
     /**

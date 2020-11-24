@@ -110,4 +110,17 @@ class RootedJsonDataTest extends TestCase
         $data->set("$.container.number", 52);
         $this->assertEquals(52, $data->get("$.container.number"));
     }
+
+    public function testAddJsonData()
+    {
+        $json = '{"container":""}';
+        $subJson = '{"number":51}';
+        $data = new RootedJsonData($json);
+        $data->set("$.container", new RootedJsonData($subJson));
+        $this->assertEquals(51, $data->get("$.container.number"));
+
+        $data2 = new RootedJsonData($json);
+        $data2->set("$.container", json_encode($subJson));
+        $this->assertEquals(51, $data->get("$.container.number"));
+    }
 }
