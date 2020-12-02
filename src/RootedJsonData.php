@@ -150,13 +150,14 @@ class RootedJsonData
         return ($thing === false) ? false : true;
     }
 
-    public function __unset($name) {
-      $field = str_replace('$.', '', $name);
-      $this->data->remove('$', $field);
+    public function __unset($name)
+    {
+        $field = str_replace('$.', '', $name);
+        $this->data->remove('$', $field);
     }
 
 
-  public function getSchema()
+    public function getSchema()
     {
         return $this->schema;
     }
