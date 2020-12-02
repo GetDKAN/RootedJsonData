@@ -87,7 +87,7 @@ class RootedJsonData
      */
     public function get(string $path)
     {
-        if ($this->__isset($path) === false) {
+        if (!isset($this->{$path})) {
             return null;
         }
         return $this->data->get($path);
@@ -103,7 +103,7 @@ class RootedJsonData
      */
     public function __get(string $path)
     {
-        return $this->data->get($path);
+        return $this->get($path);
     }
 
     /**
@@ -146,8 +146,16 @@ class RootedJsonData
     public function __isset($name)
     {
         $notSmart = new JsonObject("{$this->data}");
-        return $notSmart->get($name) ? true : false;
+        $thing = $notSmart->get($name);
+        return ($thing === false) ? false : true;
     }
+
+    public function __unset($name)
+    {
+        $field = str_replace('$.', '', $name);
+        $this->data->remove('$', $field);
+    }
+
 
     public function getSchema()
     {

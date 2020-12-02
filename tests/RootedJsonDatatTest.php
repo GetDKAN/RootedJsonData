@@ -119,4 +119,12 @@ class RootedJsonDataTest extends TestCase
         $data = new RootedJsonData($json, $schema);
         $this->assertEquals($schema, $data->getSchema());
     }
+
+    public function testUnset()
+    {
+        $json = '{"number":51}';
+        $data = new RootedJsonData($json);
+        unset($data->{'$.number'});
+        $this->assertNull($data->{'$.number'});
+    }
 }
