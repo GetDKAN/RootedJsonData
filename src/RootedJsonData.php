@@ -151,12 +151,26 @@ class RootedJsonData
         return $this->set($path, $value);
     }
 
-    public function __isset($name)
+    /**
+     * Magic __isset method for a path.
+     *
+     * @param mixed $path
+     *   Check if a property at this path is set or not.
+     *
+     * @return bool
+     */
+    public function __isset($path)
     {
         $notSmart = new JsonObject("{$this->data}");
-        return $notSmart->get($name) ? true : false;
+        return $notSmart->get($path) ? true : false;
     }
 
+    /**
+     * Get the JSON Schema as a string.
+     *
+     * @return string
+     *   The JSON Schema for this object.
+     */
     public function getSchema()
     {
         return $this->schema;
