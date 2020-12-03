@@ -2,6 +2,8 @@
 
 namespace RootedData;
 
+use InvalidArgumentException;
+use JsonPath\InvalidJsonException;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
@@ -25,16 +27,19 @@ class RootedJsonData
      *   String of JSON data.
      * @param string $schema
      *   JSON schema document for validation.
+     * @throws InvalidJsonException
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
         $decoded = json_decode($json);
 
         if (!isset($decoded)) {
-            throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        $this->schema = Schema::fromJsonString($schema);
+        if (Schema::fromJsonString($schema)) {
+            $this->schema = $schema;
+        }
 
         $data = new JsonObject($json, true);
         $result = self::validate($data, $this->schema);
@@ -48,19 +53,19 @@ class RootedJsonData
     /**
      * Validate a JsonObject.
      *
-     * @param JsonPath\JsonObject $data
+     * @param JsonObject $data
      *   JsonData object to validate against schema.
-     * @param Opis\JsonSchema\Schema $schema
-     *   And Opis Json-Schema schema object to validate data against.
+     * @param string $schema
+     *   JSON Schema string.
      *
-     * @return Opis\JsonSchema\ValidationResult
+     * @return ValidationResult
      *   Validation result object, contains error report if invalid.
      */
-    public static function validate(JsonObject $data, Schema $schema): ValidationResult
+    public static function validate(JsonObject $data, string $schema): ValidationResult
     {
+        $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        $result = $validator->schemaValidation(json_decode("{$data}"), $schema);
-        return $result;
+        return $validator->schemaValidation(json_decode("{$data}"), $opiSchema);
     }
 
     /**
@@ -80,26 +85,25 @@ class RootedJsonData
      * @return mixed
      *   Result of JsonPath\JsonObject::__get()
      */
-    public function get($path)
+    public function get(string $path)
     {
-        $result = $this->data->get($path);
-        if ($result === false) {
-            throw new \Exception("Property {$path} is not set");
+        if ($this->__isset($path) === false) {
+            return null;
         }
-        return $result;
+        return $this->data->get($path);
     }
 
     /**
-     * @see JsonPath\JsonObject::__get()
-     *
      * @param string $path
      *
      * @return mixed
      *   Result of JsonPath\JsonObject::__get()
+     * @see \JsonPath\JsonObject::__get()
+     *
      */
-    public function __get($path)
+    public function __get(string $path)
     {
-        return $this->get($path);
+        return $this->data->get($path);
     }
 
     /**
@@ -108,9 +112,10 @@ class RootedJsonData
      * @param string $path
      * @param mixed $value
      *
-     * @return JsonPath\JsonObject
+     * @return JsonObject
+     * @throws InvalidJsonException
      */
-    public function set($path, $value)
+    public function set(string $path, $value)
     {
         $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
@@ -134,15 +139,26 @@ class RootedJsonData
     }
 
     /**
-     * @see JsonPath\JsonObject::__set()
+     * @see \JsonPath\JsonObject::__get()
      *
      * @param mixed $path
      * @param mixed $value
      *
-     * @return JsonPath\JsonObject
+     * @return JsonObject
      */
     public function __set($path, $value)
     {
-        return $this->set($path, $value);
+        return $this->data->set($path, $value);
+    }
+
+    public function __isset($name)
+    {
+        $notSmart = new JsonObject("{$this->data}");
+        return $notSmart->get($name) ? true : false;
+    }
+
+    public function getSchema()
+    {
+        return $this->schema;
     }
 }

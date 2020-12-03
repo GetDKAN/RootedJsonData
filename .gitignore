@@ -1,6 +1,7 @@
 vendor/
 .phpunit*
 .vscode/
+<<<<<<< HEAD
 /.idea/codeStyles/codeStyleConfig.xml
 /composer.lock
 /.idea/modules.xml
@@ -8,3 +9,7 @@ vendor/
 /.idea/RootedJsonData.iml
 /.idea/vcs.xml
 /.idea/workspace.xml
+=======
+/.idea/
+/composer.lock
+>>>>>>> master
