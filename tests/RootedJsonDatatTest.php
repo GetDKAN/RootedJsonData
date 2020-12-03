@@ -88,12 +88,17 @@ class RootedJsonDataTest extends TestCase
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
-        $this->assertEquals($json, "{$data}");
 
         $data->set("$.number", "Alice");
+    }
 
-        // Test with magic setter as well.
+    public function testJsonIntegrityFailureMagicSetter()
+    {
         $this->expectExceptionMessage("\$[number] expects a number");
+
+        $json = '{"number":51}';
+        $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
+        $data = new RootedJsonData($json, $schema);
         $data->{"$[number]"} = "Alice";
     }
 

@@ -103,7 +103,7 @@ class RootedJsonData
      */
     public function __get(string $path)
     {
-        return $this->data->get($path);
+        return $this->get($path);
     }
 
     /**
@@ -148,7 +148,7 @@ class RootedJsonData
      */
     public function __set($path, $value)
     {
-        return $this->data->set($path, $value);
+        return $this->set($path, $value);
     }
 
     public function __isset($name)
