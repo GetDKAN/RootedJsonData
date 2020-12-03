@@ -75,7 +75,17 @@ class RootedJsonData
      */
     public function __toString()
     {
-        return (string) $this->data;
+        return $this->data->getJson();
+    }
+    
+    /**
+     * Return pretty-formatted JSON string
+     *
+     * @return string
+     */
+    public function pretty()
+    {
+        return $this->data->getJson(JSON_PRETTY_PRINT);
     }
 
     /**
