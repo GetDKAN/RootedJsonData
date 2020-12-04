@@ -11,7 +11,7 @@ use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
 {
-    public function testSeamlessExperience()
+    public function testJsonInOut()
     {
         $data = new RootedJsonData();
         $data->set("$.title", "Hello");
@@ -117,6 +117,9 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(52, $data->get("$.container.number"));
     }
 
+    /**
+     * Adding JSON structures in multiple formats should have predictable results.
+     */
     public function testAddJsonData()
     {
         // Test adding RootedJsonData structure.
@@ -135,11 +138,25 @@ class RootedJsonDataTest extends TestCase
         $this->assertIsArray($data2->get("$.container"));
     }
     
+    /**
+     * getSchema() should return the same string that was provided to constructor.
+     */
     public function testSchemaGetter()
     {
         $json = '{"number":51}';
         $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
         $this->assertEquals($schema, $data->getSchema());
+    }
+
+    /**
+     * Regular string should be one line, pretty() should return multiple lines.
+     */
+    public function testPretty()
+    {
+        $json = '{"number":51}';
+        $data = new RootedJsonData($json);
+        $this->assertEquals(0, substr_count("$data", "\n"));
+        $this->assertEquals(2, substr_count($data->pretty(), "\n"));
     }
 }
