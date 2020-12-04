@@ -92,6 +92,9 @@ class RootedJsonDataTest extends TestCase
         $data->set("$.number", "Alice");
     }
 
+    /**
+     * Do schemas still work with magic setter?
+     */
     public function testJsonIntegrityFailureMagicSetter()
     {
         $this->expectExceptionMessage("\$[number] expects a number");
