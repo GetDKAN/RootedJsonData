@@ -119,15 +119,20 @@ class RootedJsonDataTest extends TestCase
 
     public function testAddJsonData()
     {
-        $json = '{"container":""}';
+        // Test adding RootedJsonData structure.
+        $json = '{}';
+        $containerSchema = '{"type":"object","properties":{"number":{"type":"number"}}}';
+        $schema = '{"type":"object","properties":{"container":'.$containerSchema.'}}';
         $subJson = '{"number":51}';
-        $data = new RootedJsonData($json);
+        $data = new RootedJsonData($json, $schema);
         $data->set("$.container", new RootedJsonData($subJson));
         $this->assertEquals(51, $data->get("$.container.number"));
-
-        $data2 = new RootedJsonData($json);
-        $data2->set("$.container", json_encode($subJson));
-        $this->assertEquals(51, $data->get("$.container.number"));
+        
+        // If we add stdClass object, it should be work and be an array.
+        $data2 = new RootedJsonData($json, $schema);
+        $data2->set("$.container", json_decode($subJson));
+        $this->assertEquals(51, $data2->get("$.container.number"));
+        $this->assertIsArray($data2->get("$.container"));
     }
     
     public function testSchemaGetter()
