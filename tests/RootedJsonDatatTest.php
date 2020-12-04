@@ -102,6 +102,9 @@ class RootedJsonDataTest extends TestCase
         $data->{"$[number]"} = "Alice";
     }
 
+    /**
+     * Simple get value from JSON path.
+     */
     public function testJsonPathGetter()
     {
         $json = '{"container":{"number":51}}';
