@@ -109,6 +109,9 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(51, $data->get("$.container.number"));
     }
 
+    /**
+     * Simple set by JSON path.
+     */
     public function testJsonPathSetter()
     {
         $json = '{"container":{"number":51}}';
