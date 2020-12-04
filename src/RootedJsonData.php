@@ -140,6 +140,11 @@ class RootedJsonData
         return $this->data->set($path, $value);
     }
 
+    /**
+     * Ensure consistent data type whether RootedJsonData or stdClass.
+     *
+     * @param mixed $value
+     */
     private function normalizeSetValue(&$value)
     {
         if ($value instanceof RootedJsonData) {
