@@ -11,7 +11,7 @@ use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
 {
-    public function testSeamlessExperience()
+    public function testJsonInOut()
     {
         $data = new RootedJsonData();
         $data->set("$.title", "Hello");
@@ -88,15 +88,26 @@ class RootedJsonDataTest extends TestCase
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
-        $this->assertEquals($json, "{$data}");
 
         $data->set("$.number", "Alice");
+    }
 
-        // Test with magic setter as well.
+    /**
+     * Do schemas still work with magic setter?
+     */
+    public function testJsonIntegrityFailureMagicSetter()
+    {
         $this->expectExceptionMessage("\$[number] expects a number");
+
+        $json = '{"number":51}';
+        $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
+        $data = new RootedJsonData($json, $schema);
         $data->{"$[number]"} = "Alice";
     }
 
+    /**
+     * Simple get value from JSON path.
+     */
     public function testJsonPathGetter()
     {
         $json = '{"container":{"number":51}}';
@@ -104,6 +115,9 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(51, $data->get("$.container.number"));
     }
 
+    /**
+     * Simple set by JSON path.
+     */
     public function testJsonPathSetter()
     {
         $json = '{"container":{"number":51}}';
@@ -112,11 +126,46 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(52, $data->get("$.container.number"));
     }
 
+    /**
+     * Adding JSON structures in multiple formats should have predictable results.
+     */
+    public function testAddJsonData()
+    {
+        // Test adding RootedJsonData structure.
+        $json = '{}';
+        $containerSchema = '{"type":"object","properties":{"number":{"type":"number"}}}';
+        $schema = '{"type":"object","properties":{"container":'.$containerSchema.'}}';
+        $subJson = '{"number":51}';
+        $data = new RootedJsonData($json, $schema);
+        $data->set("$.container", new RootedJsonData($subJson));
+        $this->assertEquals(51, $data->get("$.container.number"));
+        
+        // If we add stdClass object, it should be work and be an array.
+        $data2 = new RootedJsonData($json, $schema);
+        $data2->set("$.container", json_decode($subJson));
+        $this->assertEquals(51, $data2->get("$.container.number"));
+        $this->assertIsArray($data2->get("$.container"));
+    }
+    
+    /**
+     * getSchema() should return the same string that was provided to constructor.
+     */
     public function testSchemaGetter()
     {
         $json = '{"number":51}';
         $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
         $data = new RootedJsonData($json, $schema);
         $this->assertEquals($schema, $data->getSchema());
+    }
+
+    /**
+     * Regular string should be one line, pretty() should return multiple lines.
+     */
+    public function testPretty()
+    {
+        $json = '{"number":51}';
+        $data = new RootedJsonData($json);
+        $this->assertEquals(0, substr_count("$data", "\n"));
+        $this->assertEquals(2, substr_count($data->pretty(), "\n"));
     }
 }

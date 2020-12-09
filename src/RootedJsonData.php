@@ -31,41 +31,40 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        $decoded = json_decode($json);
-
-        if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
-        }
-
         if (Schema::fromJsonString($schema)) {
             $this->schema = $schema;
         }
 
-        $data = new JsonObject($json, true);
-        $result = self::validate($data, $this->schema);
+        $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
             throw new ValidationException("JSON Schema validation failed.", $result);
         }
 
-        $this->data = $data;
+        $this->data = new JsonObject($json, true);
     }
 
     /**
-     * Validate a JsonObject.
+     * Validate JSON.
      *
-     * @param JsonObject $data
-     *   JsonData object to validate against schema.
+     * @param string $json
+     *   JSON string to validate against schema.
      * @param string $schema
      *   JSON Schema string.
      *
      * @return ValidationResult
      *   Validation result object, contains error report if invalid.
      */
-    public static function validate(JsonObject $data, string $schema): ValidationResult
+    public static function validate(string $json, string $schema): ValidationResult
     {
+        $decoded = json_decode($json);
+
+        if (!isset($decoded)) {
+            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+        }
+
         $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        return $validator->schemaValidation(json_decode("{$data}"), $opiSchema);
+        return $validator->schemaValidation($decoded, $opiSchema);
     }
 
     /**
@@ -75,7 +74,17 @@ class RootedJsonData
      */
     public function __toString()
     {
-        return (string) $this->data;
+        return $this->data->getJson();
+    }
+    
+    /**
+     * Return pretty-formatted JSON string
+     *
+     * @return string
+     */
+    public function pretty()
+    {
+        return $this->data->getJson(JSON_PRETTY_PRINT);
     }
 
     /**
@@ -103,7 +112,7 @@ class RootedJsonData
      */
     public function __get(string $path)
     {
-        return $this->data->get($path);
+        return $this->get($path);
     }
 
     /**
@@ -117,6 +126,7 @@ class RootedJsonData
      */
     public function set(string $path, $value)
     {
+        $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->set($path, $value);
 
@@ -131,6 +141,22 @@ class RootedJsonData
     }
 
     /**
+     * Ensure consistent data type whether RootedJsonData or stdClass.
+     *
+     * @param mixed $value
+     */
+    private function normalizeSetValue(&$value)
+    {
+        if ($value instanceof RootedJsonData) {
+            $value = $value->{"$"};
+        }
+        if ($value instanceof \stdClass) {
+            $value = new RootedJsonData(json_encode($value));
+            $this->normalizeSetValue($value);
+        }
+    }
+
+    /**
      * @see \JsonPath\JsonObject::__get()
      *
      * @param mixed $path
@@ -140,15 +166,29 @@ class RootedJsonData
      */
     public function __set($path, $value)
     {
-        return $this->data->set($path, $value);
+        return $this->set($path, $value);
     }
 
-    public function __isset($name)
+    /**
+     * Magic __isset method for a path.
+     *
+     * @param mixed $path
+     *   Check if a property at this path is set or not.
+     *
+     * @return bool
+     */
+    public function __isset($path)
     {
         $notSmart = new JsonObject("{$this->data}");
-        return $notSmart->get($name) ? true : false;
+        return $notSmart->get($path) ? true : false;
     }
 
+    /**
+     * Get the JSON Schema as a string.
+     *
+     * @return string
+     *   The JSON Schema for this object.
+     */
     public function getSchema()
     {
         return $this->schema;
