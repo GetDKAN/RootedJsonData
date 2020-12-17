@@ -64,11 +64,23 @@ class RootedJsonDataTest extends TestCase
             $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
         }
     }
-
+    
+    // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity()
+    {
+        $this->expectException(SchemaKeywordException::class);
+        $json = '{"number":"hello"}';
+        // Keyword "properties" should be an object not an array.
+        $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
+        new RootedJsonData($json, $schema);
+    }
+
+    // Schema is not even valid JSON
+    public function testSchemaJsonIntegrity()
     {
         $this->expectException(InvalidSchemaException::class);
         $json = '{"number":"hello"}';
+        // Missing a closing bracket
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
     }
