@@ -6,7 +6,7 @@ namespace RootedDataTest;
 use PHPUnit\Framework\TestCase;
 use RootedData\RootedJsonData;
 use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Schema;
+use Opis\JsonSchema\Exception\SchemaKeywordException;
 use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
@@ -64,7 +64,7 @@ class RootedJsonDataTest extends TestCase
             $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
         }
     }
-    
+
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity()
     {
