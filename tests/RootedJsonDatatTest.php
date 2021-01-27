@@ -170,7 +170,7 @@ class RootedJsonDataTest extends TestCase
     }
 
     /**
-     * Adds an elements to an array.
+     * Adds string elements to an array.
      */
     public function testAdd()
     {
@@ -181,7 +181,7 @@ class RootedJsonDataTest extends TestCase
     }
 
     /**
-     * Adds an elements to an array.
+     * Adds object elements to an array.
      */
     public function testAddObject()
     {
@@ -192,7 +192,7 @@ class RootedJsonDataTest extends TestCase
     }
 
     /**
-     * If an array is provided, adding elements that match array should work,
+     * If a schema is provided, adding elements that match array should work,
      * elements that violate schema will fail.
      */
     public function testAddWithSchema()
