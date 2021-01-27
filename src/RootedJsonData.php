@@ -193,4 +193,34 @@ class RootedJsonData
     {
         return $this->schema;
     }
+
+    /**
+     * Wrapper for JsonObject add() method
+     *
+     * @param string $path
+     *   Path to an array
+     * @param mixed $value
+     *   Value to add
+     * @param string $field
+     *   Key if adding key/value pair
+     *
+     * @return JsonObject
+     * @throws InvalidJsonException
+     *
+     * @see JsonPath\JsonObject::add()
+     */
+    public function add($path, $value, $field = null)
+    {
+        $this->normalizeSetValue($value);
+        $validationJsonObject = new JsonObject((string) $this->data);
+        $validationJsonObject->add($path, $value, $field);
+
+        $result = self::validate($validationJsonObject, $this->schema);
+        if (!$result->isValid()) {
+            $message = "JSON Schema validation failed.";
+            throw new ValidationException($message, $result);
+        }
+
+        return $this->data->add($path, $value, $field);
+    }
 }

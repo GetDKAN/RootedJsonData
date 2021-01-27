@@ -168,4 +168,41 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(0, substr_count("$data", "\n"));
         $this->assertEquals(2, substr_count($data->pretty(), "\n"));
     }
+
+    /**
+     * Adds string elements to an array.
+     */
+    public function testAdd()
+    {
+        $json = '{"numbers":["zero","one","two"]}';
+        $data = new RootedJsonData($json);
+        $data->add("$.numbers", "three");
+        $this->assertEquals("three", $data->{"$.numbers[3]"});
+    }
+
+    /**
+     * Adds object elements to an array.
+     */
+    public function testAddObject()
+    {
+        $json = '{"numbers":[{"name":"zero","value":0}]}';
+        $data = new RootedJsonData($json);
+        $data->add("$.numbers", ["name" => "one", "value" => 1]);
+        $this->assertEquals("one", current($data->{"$.numbers[?(@.value == 1)].name"}));
+    }
+
+    /**
+     * If a schema is provided, adding elements that match array should work,
+     * elements that violate schema will fail.
+     */
+    public function testAddWithSchema()
+    {
+        $json = '{"numbers":["zero","one"]}';
+        $schema = '{"type": "object","properties":{"numbers":{"type":"array","items":{"type":"string"}}}}';
+        $data = new RootedJsonData($json, $schema);
+        $data->add("$.numbers", "two");
+        $this->assertEquals("two", $data->{"$.numbers[2]"});
+        $this->expectException(ValidationException::class);
+        $data->add("$.numbers", ["name" => "three", "value" => 3]);
+    }
 }
