@@ -84,7 +84,7 @@ class RootedJsonData
      */
     public function pretty()
     {
-        return $this->data->getJson(JSON_PRETTY_PRINT);
+        return $this->data->getJson(JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
     }
 
     /**
