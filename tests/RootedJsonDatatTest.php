@@ -168,4 +168,15 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals(0, substr_count("$data", "\n"));
         $this->assertEquals(2, substr_count($data->pretty(), "\n"));
     }
+
+    /**
+     * Adds an elements to an array.
+     */
+    public function testAdd()
+    {
+        $json = '{"numbers":["zero","one","two"]}';
+        $data = new RootedJsonData($json);
+        $data->add("$.numbers", "three");
+        $this->assertEquals("three", $data->{"$.numbers[3]"});
+    }
 }

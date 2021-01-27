@@ -193,4 +193,22 @@ class RootedJsonData
     {
         return $this->schema;
     }
+
+    /**
+     * Wrapper for JsonObject add() method
+     *
+     * @param string $path
+     *   Path to an array
+     * @param mixed $value
+     *   Value to add
+     * @param string $field
+     *   Key if adding key/value pair
+     *
+     * @see JsonPath\JsonObject::add()
+     */
+    public function add($path, $value, $field = null)
+    {
+        $this->normalizeSetValue($value);
+        $this->data->add($path, $value, $field);
+    }
 }
