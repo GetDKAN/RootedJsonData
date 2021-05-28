@@ -37,6 +37,7 @@ class RootedJsonData
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
+            exit(var_dump($result->getResult()));
             throw new ValidationException("JSON Schema validation failed.", $result);
         }
 
@@ -76,7 +77,7 @@ class RootedJsonData
     {
         return $this->data->getJson();
     }
-    
+
     /**
      * Return pretty-formatted JSON string
      *
