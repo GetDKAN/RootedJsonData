@@ -37,7 +37,7 @@ class RootedJsonData
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
-            exit(var_dump($result->getResult()));
+            exit(var_dump($result->getErrors()));
             throw new ValidationException("JSON Schema validation failed.", $result);
         }
 
