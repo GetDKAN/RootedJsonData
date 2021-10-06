@@ -76,7 +76,7 @@ class RootedJsonData
     {
         return $this->data->getJson();
     }
-    
+
     /**
      * Return pretty-formatted JSON string
      *
