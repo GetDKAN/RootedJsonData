@@ -14,14 +14,14 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Validation result report.
      *
-     * @var Opis\JsonSchema\ValidationResult
+     * @var \Opis\JsonSchema\ValidationResult
      */
-    private $validationResult;
+    private ValidationResult $validationResult;
 
     /**
      * @param string $message
      *   Exception message.
-     * @param ValidationResult $validationResult
+     * @param \Opis\JsonSchema\ValidationResult $validationResult
      *   Validation result report.
      */
     public function __construct(string $message, ValidationResult $validationResult)
@@ -33,10 +33,10 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Get the validation result object.
      *
-     * @return Opis\JsonSchema\ValidationResult
+     * @return \Opis\JsonSchema\ValidationResult
      *   Validation result report.
      */
-    public function getResult()
+    public function getResult(): ValidationResult
     {
         return $this->validationResult;
     }
