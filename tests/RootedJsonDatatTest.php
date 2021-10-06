@@ -60,13 +60,13 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+            $this->assertEquals('properties', $e->getResult()->error()->keyword());
         }
     }
 
     public function testSchemaIntegrity()
     {
-        $this->expectException(SchemaException::class);
+        $this->expectException(\TypeError::class);
         $json = '{"number":"hello"}';
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
@@ -82,7 +82,7 @@ class RootedJsonDataTest extends TestCase
 
     public function testJsonIntegrityFailureAfterChange()
     {
-        $this->expectExceptionMessage("\$.number expects a number");
+        $this->expectExceptionMessage('The data (string) must match the type: number');
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
@@ -96,7 +96,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testJsonIntegrityFailureMagicSetter()
     {
-        $this->expectExceptionMessage("\$[number] expects a number");
+        $this->expectExceptionMessage('The data (string) must match the type: number');
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
