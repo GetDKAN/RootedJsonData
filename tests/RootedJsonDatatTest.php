@@ -5,8 +5,7 @@ namespace RootedDataTest;
 
 use PHPUnit\Framework\TestCase;
 use RootedData\RootedJsonData;
-use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Schema;
+use Opis\JsonSchema\Exceptions\SchemaException;
 use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
@@ -67,7 +66,7 @@ class RootedJsonDataTest extends TestCase
 
     public function testSchemaIntegrity()
     {
-        $this->expectException(InvalidSchemaException::class);
+        $this->expectException(SchemaException::class);
         $json = '{"number":"hello"}';
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
@@ -139,14 +138,14 @@ class RootedJsonDataTest extends TestCase
         $data = new RootedJsonData($json, $schema);
         $data->set("$.container", new RootedJsonData($subJson));
         $this->assertEquals(51, $data->get("$.container.number"));
-        
+
         // If we add stdClass object, it should be work and be an array.
         $data2 = new RootedJsonData($json, $schema);
         $data2->set("$.container", json_decode($subJson));
         $this->assertEquals(51, $data2->get("$.container.number"));
         $this->assertIsArray($data2->get("$.container"));
     }
-    
+
     /**
      * getSchema() should return the same string that was provided to constructor.
      */
