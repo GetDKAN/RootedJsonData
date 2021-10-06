@@ -31,9 +31,7 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
-            $this->schema = $schema;
-        }
+        $this->schema = $schema;
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
@@ -62,9 +60,13 @@ class RootedJsonData
             throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+
+        $opiSchema = $validator
+            ->loader()
+            ->loadObjectSchema(json_decode($schema));
+
+        return $validator->validate($decoded, $opiSchema);
     }
 
     /**
