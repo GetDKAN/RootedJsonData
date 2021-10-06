@@ -16,7 +16,7 @@ class ValidationException extends \InvalidArgumentException
      *
      * @var \Opis\JsonSchema\ValidationResult
      */
-    private $validationResult;
+    private ValidationResult $validationResult;
 
     /**
      * @param string $message
@@ -36,7 +36,7 @@ class ValidationException extends \InvalidArgumentException
      * @return \Opis\JsonSchema\ValidationResult
      *   Validation result report.
      */
-    public function getResult()
+    public function getResult(): ValidationResult
     {
         return $this->validationResult;
     }
