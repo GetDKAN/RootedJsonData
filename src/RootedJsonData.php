@@ -54,7 +54,7 @@ class RootedJsonData
         $decoded = json_decode($json);
 
         if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+            throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
         $validator = new Validator();
