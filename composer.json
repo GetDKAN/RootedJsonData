@@ -16,7 +16,7 @@
     "require": {
         "ext-json": "*",
         "galbar/jsonpath": "^1.1",
-        "opis/json-schema": "^1.0"
+        "opis/json-schema": "^1.0.8"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.4",
