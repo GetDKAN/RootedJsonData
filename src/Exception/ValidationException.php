@@ -14,7 +14,7 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Validation result report.
      *
-     * @var Opis\JsonSchema\ValidationResult
+     * @var ValidationResult
      */
     private $validationResult;
 
@@ -33,7 +33,7 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Get the validation result object.
      *
-     * @return Opis\JsonSchema\ValidationResult
+     * @return ValidationResult
      *   Validation result report.
      */
     public function getResult()
