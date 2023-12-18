@@ -228,7 +228,23 @@ class RootedJsonDataTest extends TestCase
         $schema = '{"type": "object","required":["field1"],"properties":{"field1":{"type":"string"},"field2":{"type":"string"}}}';
         $data = new RootedJsonData($json, $schema);
         $data->remove("$", "field2");
+        $this->assertEquals("foo", $data->{"$.field1"});
         $this->expectException(ValidationException::class);
         $data->remove("$", "field1");
+    }
+
+    /**
+     * If a schema is provided, adding elements that match array should work,
+     * elements that violate schema will fail.
+     */
+    public function testUnset()
+    {
+        $json = '{"field1":"foo","field2":"bar"}';
+        $schema = '{"type": "object","required":["field1"],"properties":{"field1":{"type":"string"},"field2":{"type":"string"}}}';
+        $data = new RootedJsonData($json, $schema);
+        unset($data->{"$.field2"});
+        $this->assertEquals("foo", $data->{"$.field1"});
+        $this->expectException(ValidationException::class);
+        unset($data->{"$.field1"});
     }
 }

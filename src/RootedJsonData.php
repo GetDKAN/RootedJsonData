@@ -183,6 +183,14 @@ class RootedJsonData
         return $notSmart->get($path) ? true : false;
     }
 
+    public function __unset($path)
+    {
+        $exploded = explode(".", $path);
+        $field = array_pop($exploded);
+        $imploded = implode(".", $exploded);
+        $this->remove($imploded, $field);
+    }
+
     /**
      * Wrapper for JsonObject::remove() method
      *
