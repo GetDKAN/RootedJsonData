@@ -184,6 +184,29 @@ class RootedJsonData
     }
 
     /**
+     * Wrapper for JsonObject::remove() method
+     *
+     * @param mixed $path
+     *   Check if a property at this path is set or not.
+     *
+     * @return bool
+     */
+    public function remove($path, $field)
+    {
+        $validationJsonObject = new JsonObject((string) $this->data);
+        $validationJsonObject->remove($path, $field);
+
+        $result = self::validate($validationJsonObject, $this->schema);
+        if (!$result->isValid()) {
+            $keywordArgs = $result->getFirstError()->keywordArgs();
+            $message = "{$path} expects a {$keywordArgs['expected']}";
+            throw new ValidationException($message, $result);
+        }
+
+        return $this->data->remove($path, $field);
+    }
+
+    /**
      * Get the JSON Schema as a string.
      *
      * @return string
