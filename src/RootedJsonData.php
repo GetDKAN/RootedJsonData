@@ -183,6 +183,12 @@ class RootedJsonData
         return $notSmart->get($path) ? true : false;
     }
 
+    /**
+     * Magic __unset method, detects field from path.
+     *
+     * @param mixed $path
+     *   Path to unset, including specific field.
+     */
     public function __unset($path)
     {
         $exploded = explode(".", $path);
@@ -192,12 +198,15 @@ class RootedJsonData
     }
 
     /**
-     * Wrapper for JsonObject::remove() method
+     * Wrapper for JsonObject::remove() method, plus validation.
      *
      * @param mixed $path
-     *   Check if a property at this path is set or not.
+     *   jsonPath.
+     * @param mixed $field
+     *   Field to remove.
      *
-     * @return bool
+     * @return \JsonPath\JsonObject
+     *  Modified object (self).
      */
     public function remove($path, $field)
     {
