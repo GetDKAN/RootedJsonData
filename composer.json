@@ -15,7 +15,7 @@
     ],
     "require": {
         "ext-json": "*",
-        "galbar/jsonpath": "^1.1",
+        "galbar/jsonpath": "^3.0",
         "opis/json-schema": "^1.0.8"
     },
     "require-dev": {

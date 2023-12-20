@@ -184,6 +184,46 @@ class RootedJsonData
     }
 
     /**
+     * Magic __unset method, detects field from path.
+     *
+     * @param mixed $path
+     *   Path to unset, including specific field.
+     */
+    public function __unset($path)
+    {
+        $exploded = explode(".", $path);
+        $field = array_pop($exploded);
+        $imploded = implode(".", $exploded);
+        $this->remove($imploded, $field);
+    }
+
+    /**
+     * Wrapper for JsonObject::remove() method, plus validation.
+     *
+     * @param mixed $path
+     *   jsonPath.
+     * @param mixed $field
+     *   Field to remove.
+     *
+     * @return \JsonPath\JsonObject
+     *  Modified object (self).
+     */
+    public function remove($path, $field)
+    {
+        $validationJsonObject = new JsonObject((string) $this->data);
+        $validationJsonObject->remove($path, $field);
+
+        $result = self::validate($validationJsonObject, $this->schema);
+        if (!$result->isValid()) {
+            $keywordArgs = $result->getFirstError()->keywordArgs();
+            $message = "{$path} expects a {$keywordArgs['expected']}";
+            throw new ValidationException($message, $result);
+        }
+
+        return $this->data->remove($path, $field);
+    }
+
+    /**
      * Get the JSON Schema as a string.
      *
      * @return string
