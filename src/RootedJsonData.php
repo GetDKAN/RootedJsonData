@@ -17,8 +17,8 @@ use RootedData\Exception\ValidationException;
 class RootedJsonData
 {
 
-    private $schema;
-    private $data;
+    private ?string $schema = null;
+    private JsonObject $data;
 
     /**
      * Constructor method.
@@ -145,7 +145,7 @@ class RootedJsonData
      *
      * @param mixed $value
      */
-    private function normalizeSetValue(&$value)
+    private function normalizeSetValue(&$value): void
     {
         if ($value instanceof RootedJsonData) {
             $value = $value->{"$"};
@@ -164,7 +164,7 @@ class RootedJsonData
      *
      * @return JsonObject
      */
-    public function __set($path, $value)
+    public function __set(string $path, $value)
     {
         return $this->set($path, $value);
     }
@@ -205,7 +205,7 @@ class RootedJsonData
      * @param mixed $field
      *   Field to remove.
      *
-     * @return \JsonPath\JsonObject
+     * @return JsonObject
      *  Modified object (self).
      */
     public function remove($path, $field)
