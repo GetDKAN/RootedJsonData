@@ -225,7 +225,19 @@ class RootedJsonDataTest extends TestCase
     public function testRemove()
     {
         $json = '{"field1":"foo","field2":"bar"}';
-        $schema = '{"type": "object","required":["field1"],"properties":{"field1":{"type":"string"},"field2":{"type":"string"}}}';
+        $schema = '
+            {
+                "type": "object",
+                "required":["field1"],
+                "properties": {
+                    "field1": {
+                        "type":"string"
+                    },
+                    "field2": {
+                        "type":"string"
+                    }
+                }
+            }';
         $data = new RootedJsonData($json, $schema);
         $data->remove("$", "field2");
         $this->assertEquals("foo", $data->{"$.field1"});
@@ -240,7 +252,19 @@ class RootedJsonDataTest extends TestCase
     public function testUnset()
     {
         $json = '{"field1":"foo","field2":"bar"}';
-        $schema = '{"type": "object","required":["field1"],"properties":{"field1":{"type":"string"},"field2":{"type":"string"}}}';
+        $schema = '
+            {
+                "type": "object",
+                "required":["field1"],
+                "properties": {
+                    "field1": {
+                        "type":"string"
+                    },
+                    "field2": {
+                        "type":"string"
+                    }
+                }
+            }';
         $data = new RootedJsonData($json, $schema);
         unset($data->{"$.field2"});
         $this->assertEquals("foo", $data->{"$.field1"});
