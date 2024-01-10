@@ -16,28 +16,27 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->phpVersion(PhpVersion::PHP_74);
 
     $rectorConfig->paths([
-    __DIR__ . '/src',
-    __DIR__ . '/test',
-    __DIR__ . '/rector.php',
+        __DIR__ . '/src',
+        __DIR__ . '/test',
+        __DIR__ . '/rector.php',
     ]);
 
     $rectorConfig->sets([
-    // Please no dead code or unneeded variables.
-    SetList::DEAD_CODE,
-    // Try to figure out type hints.
-    SetList::TYPE_DECLARATION,
-    // Bring us up to PHP 7.4.
-    LevelSetList::UP_TO_PHP_74,
+        // Please no dead code or unneeded variables.
+        SetList::DEAD_CODE,
+        // Try to figure out type hints.
+        SetList::TYPE_DECLARATION,
+        SetList::PHP_82,
     ]);
 
     $rectorConfig->skip([
-    // Don't throw errors on JSON parse problems. Yet.
-    // @todo Throw errors and deal with them appropriately.
-    JsonThrowOnErrorRector::class,
-    // We like our tags.
-    RemoveUselessParamTagRector::class,
-    RemoveUselessReturnTagRector::class,
-    RemoveUselessVarTagRector::class,
+        // Don't throw errors on JSON parse problems. Yet.
+        // @todo Throw errors and deal with them appropriately.
+        JsonThrowOnErrorRector::class,
+        // We like our tags.
+        RemoveUselessParamTagRector::class,
+        RemoveUselessReturnTagRector::class,
+        RemoveUselessVarTagRector::class,
     ]);
 
     $rectorConfig->importNames();

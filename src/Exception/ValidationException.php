@@ -13,10 +13,8 @@ class ValidationException extends \InvalidArgumentException
 {
     /**
      * Validation result report.
-     *
-     * @var ValidationResult
      */
-    private $validationResult;
+    private ValidationResult $validationResult;
 
     /**
      * @param string $message
@@ -36,7 +34,7 @@ class ValidationException extends \InvalidArgumentException
      * @return ValidationResult
      *   Validation result report.
      */
-    public function getResult()
+    public function getResult(): ValidationResult
     {
         return $this->validationResult;
     }

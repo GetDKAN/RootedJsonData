@@ -226,10 +226,10 @@ class RootedJsonData
     /**
      * Get the JSON Schema as a string.
      *
-     * @return string
+     * @return string|null
      *   The JSON Schema for this object.
      */
-    public function getSchema()
+    public function getSchema(): ?string
     {
         return $this->schema;
     }
