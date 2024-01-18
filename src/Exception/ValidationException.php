@@ -13,10 +13,8 @@ class ValidationException extends \InvalidArgumentException
 {
     /**
      * Validation result report.
-     *
-     * @var Opis\JsonSchema\ValidationResult
      */
-    private $validationResult;
+    private ValidationResult $validationResult;
 
     /**
      * @param string $message
@@ -33,10 +31,10 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Get the validation result object.
      *
-     * @return Opis\JsonSchema\ValidationResult
+     * @return ValidationResult
      *   Validation result report.
      */
-    public function getResult()
+    public function getResult(): ValidationResult
     {
         return $this->validationResult;
     }
