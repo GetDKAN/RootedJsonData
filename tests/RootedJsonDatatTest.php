@@ -64,10 +64,22 @@ class RootedJsonDataTest extends TestCase
         }
     }
 
+    // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity()
+    {
+        $this->expectException(SchemaKeywordException::class);
+        $json = '{"number":"hello"}';
+        // Keyword "properties" should be an object not an array.
+        $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
+        new RootedJsonData($json, $schema);
+    }
+
+    // Schema is not even valid JSON
+    public function testSchemaJsonIntegrity()
     {
         $this->expectException(\TypeError::class);
         $json = '{"number":"hello"}';
+        // Missing a closing bracket
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
     }
@@ -203,5 +215,59 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals("two", $data->{"$.numbers[2]"});
         $this->expectException(ValidationException::class);
         $data->add("$.numbers", ["name" => "three", "value" => 3]);
+    }
+
+    /**
+     * If a schema is provided, adding elements that match array should work,
+     * elements that violate schema will fail.
+     */
+    public function testRemove()
+    {
+        $json = '{"field1":"foo","field2":"bar"}';
+        $schema = '
+            {
+                "type": "object",
+                "required":["field1"],
+                "properties": {
+                    "field1": {
+                        "type":"string"
+                    },
+                    "field2": {
+                        "type":"string"
+                    }
+                }
+            }';
+        $data = new RootedJsonData($json, $schema);
+        $data->remove("$", "field2");
+        $this->assertEquals("foo", $data->{"$.field1"});
+        $this->expectException(ValidationException::class);
+        $data->remove("$", "field1");
+    }
+
+    /**
+     * If a schema is provided, adding elements that match array should work,
+     * elements that violate schema will fail.
+     */
+    public function testUnset()
+    {
+        $json = '{"field1":"foo","field2":"bar"}';
+        $schema = '
+            {
+                "type": "object",
+                "required":["field1"],
+                "properties": {
+                    "field1": {
+                        "type":"string"
+                    },
+                    "field2": {
+                        "type":"string"
+                    }
+                }
+            }';
+        $data = new RootedJsonData($json, $schema);
+        unset($data->{"$.field2"});
+        $this->assertEquals("foo", $data->{"$.field1"});
+        $this->expectException(ValidationException::class);
+        unset($data->{"$.field1"});
     }
 }

@@ -1,10 +1,6 @@
 vendor/
 .phpunit*
 .vscode/
-/.idea/codeStyles/codeStyleConfig.xml
 /composer.lock
-/.idea/modules.xml
-/.idea/php.xml
-/.idea/RootedJsonData.iml
-/.idea/vcs.xml
-/.idea/workspace.xml
+.idea
+.ddev

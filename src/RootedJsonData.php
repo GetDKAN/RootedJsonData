@@ -14,8 +14,8 @@ use RootedData\Exception\ValidationException;
  */
 class RootedJsonData
 {
-    private $schema;
-    private $data;
+    private ?string $schema = null;
+    private JsonObject $data;
 
     /**
      * Constructor method.
@@ -145,7 +145,7 @@ class RootedJsonData
      *
      * @param mixed $value
      */
-    private function normalizeSetValue(&$value)
+    private function normalizeSetValue(&$value): void
     {
         if ($value instanceof RootedJsonData) {
             $value = $value->{"$"};
@@ -164,7 +164,7 @@ class RootedJsonData
      *
      * @return JsonObject
      */
-    public function __set($path, $value)
+    public function __set(string $path, $value)
     {
         return $this->set($path, $value);
     }
@@ -184,12 +184,52 @@ class RootedJsonData
     }
 
     /**
+     * Magic __unset method, detects field from path.
+     *
+     * @param mixed $path
+     *   Path to unset, including specific field.
+     */
+    public function __unset($path)
+    {
+        $exploded = explode(".", $path);
+        $field = array_pop($exploded);
+        $imploded = implode(".", $exploded);
+        $this->remove($imploded, $field);
+    }
+
+    /**
+     * Wrapper for JsonObject::remove() method, plus validation.
+     *
+     * @param mixed $path
+     *   jsonPath.
+     * @param mixed $field
+     *   Field to remove.
+     *
+     * @return JsonObject
+     *  Modified object (self).
+     */
+    public function remove($path, $field)
+    {
+        $validationJsonObject = new JsonObject((string) $this->data);
+        $validationJsonObject->remove($path, $field);
+
+        $result = self::validate($validationJsonObject, $this->schema);
+        if (!$result->isValid()) {
+            $keywordArgs = $result->getFirstError()->keywordArgs();
+            $message = "{$path} expects a {$keywordArgs['expected']}";
+            throw new ValidationException($message, $result);
+        }
+
+        return $this->data->remove($path, $field);
+    }
+
+    /**
      * Get the JSON Schema as a string.
      *
-     * @return string
+     * @return string|null
      *   The JSON Schema for this object.
      */
-    public function getSchema()
+    public function getSchema(): ?string
     {
         return $this->schema;
     }
