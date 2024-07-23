@@ -4,10 +4,8 @@ namespace RootedData;
 
 use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
-use Opis\JsonSchema\ValidationResult;
+use JsonSchema\Validator;
 use RootedData\Exception\ValidationException;
 
 /**
@@ -31,9 +29,7 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
-            $this->schema = $schema;
-        }
+        $this->schema = $schema;
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
@@ -51,20 +47,21 @@ class RootedJsonData
      * @param string $schema
      *   JSON Schema string.
      *
-     * @return ValidationResult
+     * @return \JsonSchema\Validator
      *   Validation result object, contains error report if invalid.
      */
-    public static function validate(string $json, string $schema): ValidationResult
+    public static function validate(string $json, string $schema): Validator
     {
         $decoded = json_decode($json);
+        $schema_decoded = json_decode($schema);
 
         if (!isset($decoded)) {
             throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+        $validator->validate($decoded, $schema_decoded);
+        return $validator;
     }
 
     /**

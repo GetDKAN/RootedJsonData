@@ -2,7 +2,7 @@
 
 namespace RootedData\Exception;
 
-use Opis\JsonSchema\ValidationResult;
+use JsonSchema\Validator;
 
 /**
  * Exception class to throw for RootedJsonData objects that fail validation.
@@ -14,7 +14,7 @@ class ValidationException extends \InvalidArgumentException
     /**
      * Validation result report.
      */
-    private ValidationResult $validationResult;
+    private Validator $validationResult;
 
     /**
      * @param string $message
@@ -22,9 +22,9 @@ class ValidationException extends \InvalidArgumentException
      * @param ValidationResult $validationResult
      *   Validation result report.
      */
-    public function __construct(string $message, ValidationResult $validationResult)
+    public function __construct(string $message, Validator $validation_result)
     {
-        $this->validationResult = $validationResult;
+        $this->validationResult = $validation_result;
         parent::__construct($message);
     }
 
@@ -34,7 +34,7 @@ class ValidationException extends \InvalidArgumentException
      * @return ValidationResult
      *   Validation result report.
      */
-    public function getResult(): ValidationResult
+    public function getResult(): Validator
     {
         return $this->validationResult;
     }
