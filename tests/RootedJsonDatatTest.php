@@ -11,7 +11,7 @@ use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
 {
-    public function testJsonInOut()
+    public function testJsonInOut(): void
     {
         $data = new RootedJsonData();
         $data->set("$.title", "Hello");
@@ -22,7 +22,7 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals('{"title":"Hello","publisher":{"name":"Frank"}}', (string) $data);
     }
 
-    public function testMagicGetterAndSetter()
+    public function testMagicGetterAndSetter(): void
     {
         $data = new RootedJsonData();
         $data->{"$.title"} = "Hello";
@@ -30,7 +30,7 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals("Hello", $data->{"$.title"});
     }
 
-    public function testBracketSyntax()
+    public function testBracketSyntax(): void
     {
         $data = new RootedJsonData();
         $data->{"$[title]"} = "Hello";
@@ -38,14 +38,14 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals("Hello", $data->{"$[title]"});
     }
 
-    public function testAccessToNonExistentProperties()
+    public function testAccessToNonExistentProperties(): void
     {
         $data = new RootedJsonData();
         $this->assertNull($data->get("$.city"));
         $this->assertFalse(isset($data->{"$.city"}));
     }
 
-    public function testJsonFormat()
+    public function testJsonFormat(): void
     {
       // We want our data to keep its integrity in the in-betweens: From input to output.
         $this->expectExceptionMessage("Invalid JSON: Syntax error");
@@ -53,7 +53,7 @@ class RootedJsonDataTest extends TestCase
         new RootedJsonData($json);
     }
 
-    public function testJsonIntegrityFailure()
+    public function testJsonIntegrityFailure(): void
     {
         $json = '{"number":"hello"}';
         $schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
@@ -66,7 +66,7 @@ class RootedJsonDataTest extends TestCase
     }
 
     // Schema does not follow JSON Schema spec
-    public function testSchemaIntegrity()
+    public function testSchemaIntegrity(): void
     {
         $this->expectException(SchemaKeywordException::class);
         $json = '{"number":"hello"}';
@@ -76,7 +76,7 @@ class RootedJsonDataTest extends TestCase
     }
 
     // Schema is not even valid JSON
-    public function testSchemaJsonIntegrity()
+    public function testSchemaJsonIntegrity(): void
     {
         $this->expectException(InvalidSchemaException::class);
         $json = '{"number":"hello"}';
@@ -85,7 +85,7 @@ class RootedJsonDataTest extends TestCase
         new RootedJsonData($json, $schema);
     }
 
-    public function testJsonIntegrity()
+    public function testJsonIntegrity(): void
     {
         $json = '{"number":51}';
         $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
@@ -93,7 +93,7 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals($json, "{$data}");
     }
 
-    public function testJsonIntegrityFailureAfterChange()
+    public function testJsonIntegrityFailureAfterChange(): void
     {
         $this->expectExceptionMessage("\$.number expects a number");
 
@@ -107,7 +107,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Do schemas still work with magic setter?
      */
-    public function testJsonIntegrityFailureMagicSetter()
+    public function testJsonIntegrityFailureMagicSetter(): void
     {
         $this->expectExceptionMessage("\$[number] expects a number");
 
@@ -120,7 +120,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Simple get value from JSON path.
      */
-    public function testJsonPathGetter()
+    public function testJsonPathGetter(): void
     {
         $json = '{"container":{"number":51}}';
         $data = new RootedJsonData($json);
@@ -130,7 +130,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Simple set by JSON path.
      */
-    public function testJsonPathSetter()
+    public function testJsonPathSetter(): void
     {
         $json = '{"container":{"number":51}}';
         $data = new RootedJsonData($json);
@@ -141,7 +141,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Adding JSON structures in multiple formats should have predictable results.
      */
-    public function testAddJsonData()
+    public function testAddJsonData(): void
     {
         // Test adding RootedJsonData structure.
         $json = '{}';
@@ -162,7 +162,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * getSchema() should return the same string that was provided to constructor.
      */
-    public function testSchemaGetter()
+    public function testSchemaGetter(): void
     {
         $json = '{"number":51}';
         $schema = '{"type": "object","properties":{"number":{"type":"number"}}}';
@@ -173,7 +173,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Regular string should be one line, pretty() should return multiple lines.
      */
-    public function testPretty()
+    public function testPretty(): void
     {
         $json = '{"number":51}';
         $data = new RootedJsonData($json);
@@ -184,7 +184,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Adds string elements to an array.
      */
-    public function testAdd()
+    public function testAdd(): void
     {
         $json = '{"numbers":["zero","one","two"]}';
         $data = new RootedJsonData($json);
@@ -195,7 +195,7 @@ class RootedJsonDataTest extends TestCase
     /**
      * Adds object elements to an array.
      */
-    public function testAddObject()
+    public function testAddObject(): void
     {
         $json = '{"numbers":[{"name":"zero","value":0}]}';
         $data = new RootedJsonData($json);
@@ -207,7 +207,7 @@ class RootedJsonDataTest extends TestCase
      * If a schema is provided, adding elements that match array should work,
      * elements that violate schema will fail.
      */
-    public function testAddWithSchema()
+    public function testAddWithSchema(): void
     {
         $json = '{"numbers":["zero","one"]}';
         $schema = '{"type": "object","properties":{"numbers":{"type":"array","items":{"type":"string"}}}}';
@@ -222,7 +222,7 @@ class RootedJsonDataTest extends TestCase
      * If a schema is provided, adding elements that match array should work,
      * elements that violate schema will fail.
      */
-    public function testRemove()
+    public function testRemove(): void
     {
         $json = '{"field1":"foo","field2":"bar"}';
         $schema = '
@@ -249,7 +249,7 @@ class RootedJsonDataTest extends TestCase
      * If a schema is provided, adding elements that match array should work,
      * elements that violate schema will fail.
      */
-    public function testUnset()
+    public function testUnset(): void
     {
         $json = '{"field1":"foo","field2":"bar"}';
         $schema = '
