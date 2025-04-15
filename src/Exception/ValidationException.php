@@ -10,30 +10,43 @@ namespace RootedData\Exception;
 class ValidationException extends \InvalidArgumentException
 {
     /**
-     * Validation result report.
+     * Validation errors.
      */
-    private ValidationResult $validationResult;
+    private array $errors;
 
     /**
      * @param string $message
      *   Exception message.
-     * @param ValidationResult $validationResult
+     * @param array $errors
      *   Validation result report.
      */
-    public function __construct(string $message, ValidationResult $validationResult)
+    public function __construct(string $message, array $errors)
     {
-        $this->validationResult = $validationResult;
+        $this->errors = $errors;
         parent::__construct($message);
     }
 
     /**
-     * Get the validation result object.
+     * Get the validation errors.
      *
-     * @return ValidationResult
-     *   Validation result report.
+     * @return array
+     *   Validation errors.
      */
-    public function getResult(): ValidationResult
+    public function getErrors(): array
     {
-        return $this->validationResult;
+        return $this->errors;
+    }
+    
+    /**
+     * Get the validation result object.
+     * 
+     * @deprecated since 2.0.0, use :::getErrors() instead.
+     *
+     * @return array
+     *   Errors array.
+     */
+    public function getResult(): array
+    {
+        return $this->getErrors();
     }
 }

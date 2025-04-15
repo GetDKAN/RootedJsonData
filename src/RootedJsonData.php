@@ -9,6 +9,7 @@ use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 
 use RootedData\Exception\ValidationException;
+use RootedData\Util\ErrorHelper;
 
 /**
  * RootedJsonData class. Instantiate for a service-like object for working with
@@ -35,9 +36,9 @@ class RootedJsonData
             $this->schema = $schema;
         }
 
-        $result = static::validate($json, $this->schema);
-        if (!$result->isValid()) {
-            throw new ValidationException("JSON Schema validation failed.", $result);
+        $errors = static::validate($json, $this->schema);
+        if (!empty($errors)) {
+            throw new ValidationException("JSON Schema validation failed.", $errors);
         }
 
         $this->data = new JsonObject($json, true);
@@ -76,19 +77,25 @@ class RootedJsonData
      * @param string $schema
      *   JSON Schema string.
      *
-     * @return ValidationResult
-     *   Validation result object, contains error report if invalid.
+     * @return array
+     *   Validation errors array.
      */
-    public static function validate(string $json, string $schema): int
+    public static function validate(string $json, string $schema): array
     {
         $decoded = json_decode($json);
 
         if (!isset($decoded)) {
             throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
-
+        
+        $schema_decoded = json_decode($schema);
         $validator = new Validator();
-        return $validator->validate($decoded, $schema);
+        $validator->validate($decoded, $schema_decoded);
+
+        if ($validator->getErrorMask() === Validator::ERROR_NONE) {
+            return [];
+        }
+        return $validator->getErrors();
     }
 
     /**
@@ -153,12 +160,13 @@ class RootedJsonData
         $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->set($path, $value);
-
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
-            throw new ValidationException($message, $result);
+        $errors = self::validate($validationJsonObject->getJson(), $this->schema);
+        if (!empty($errors)) {
+            $first_error = reset($errors);
+            $path = ErrorHelper::pathToJsonPath($first_error['pointer']);
+            $expected = $first_error['constraint']['params']['expected'];
+            $message = "{$path} expects {$expected}";
+            throw new ValidationException($message, $errors);
         }
 
         return $this->data->set($path, $value);
@@ -279,10 +287,10 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->add($path, $value, $field);
 
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
+        $errors = self::validate($validationJsonObject, $this->schema);
+        if (!empty($errors)) {
             $message = "JSON Schema validation failed.";
-            throw new ValidationException($message, $result);
+            throw new ValidationException($message, $errors);
         }
 
         return $this->data->add($path, $value, $field);

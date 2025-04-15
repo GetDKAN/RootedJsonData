@@ -62,7 +62,7 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+            $this->assertEquals("type", $e->getErrors()[0]['constraint']['name']);
         }
     }
 
@@ -111,7 +111,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testJsonIntegrityFailureMagicSetter(): void
     {
-        $this->expectExceptionMessage("\$[number] expects a number");
+        $this->expectExceptionMessage("\$.number expects a number");
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
