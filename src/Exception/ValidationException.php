@@ -2,8 +2,6 @@
 
 namespace RootedData\Exception;
 
-use Opis\JsonSchema\ValidationResult;
-
 /**
  * Exception class to throw for RootedJsonData objects that fail validation.
  *

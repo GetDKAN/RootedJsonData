@@ -3,10 +3,11 @@
 
 namespace RootedDataTest;
 
+use Error;
+use JsonSchema\Exception\InvalidArgumentException;
+use JsonSchema\Exception\InvalidSchemaException;
 use PHPUnit\Framework\TestCase;
 use RootedData\RootedJsonData;
-use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Exception\SchemaKeywordException;
 use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
@@ -68,7 +69,7 @@ class RootedJsonDataTest extends TestCase
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity(): void
     {
-        $this->expectException(SchemaKeywordException::class);
+        $this->expectException(InvalidSchemaException::class);
         $json = '{"number":"hello"}';
         // Keyword "properties" should be an object not an array.
         $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
@@ -78,12 +79,13 @@ class RootedJsonDataTest extends TestCase
     // Schema is not even valid JSON
     public function testSchemaJsonIntegrity(): void
     {
-        $this->expectException(InvalidSchemaException::class);
+        $this->expectException(InvalidArgumentException::class);
         $json = '{"number":"hello"}';
         // Missing a closing bracket
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
     }
+    
 
     public function testJsonIntegrity(): void
     {

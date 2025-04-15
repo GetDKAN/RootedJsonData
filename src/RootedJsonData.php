@@ -4,10 +4,10 @@ namespace RootedData;
 
 use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
-use Opis\JsonSchema\ValidationResult;
+use JsonSchema\Validator;
+use JsonSchema\Constraints\Constraint;
+
 use RootedData\Exception\ValidationException;
 
 /**
@@ -27,20 +27,45 @@ class RootedJsonData
      *   String of JSON data.
      * @param string $schema
      *   JSON schema document for validation.
-     * @throws InvalidJsonException
+     * @throws \JsonPath\InvalidJsonException
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
+        if (static::validateSchema($schema)) {
             $this->schema = $schema;
         }
 
-        $result = self::validate($json, $this->schema);
+        $result = static::validate($json, $this->schema);
         if (!$result->isValid()) {
             throw new ValidationException("JSON Schema validation failed.", $result);
         }
 
         $this->data = new JsonObject($json, true);
+    }
+
+    /**
+     * Validate JSON Schema.
+     *
+     * @param string $schema
+     *   JSON Schema string.
+     *
+     * @throws \JsonSchema\Exception\InvalidArgumentException
+     * @throws \JsonSchema\Exception\InvalidSchemaException
+     */
+    public static function validateSchema(string $schema): bool {
+        $decoded = json_decode($schema);
+        $emptyValue = new \stdClass();
+
+        $validator = new Validator();
+        $result = $validator->validate(
+            $emptyValue,
+            $decoded,
+            Constraint::CHECK_MODE_VALIDATE_SCHEMA|Constraint::CHECK_MODE_EXCEPTIONS
+        );
+        if ($result == Validator::ERROR_NONE) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -54,17 +79,16 @@ class RootedJsonData
      * @return ValidationResult
      *   Validation result object, contains error report if invalid.
      */
-    public static function validate(string $json, string $schema): ValidationResult
+    public static function validate(string $json, string $schema): int
     {
         $decoded = json_decode($json);
 
         if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+            throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+        return $validator->validate($decoded, $schema);
     }
 
     /**
