@@ -7,9 +7,12 @@ use JsonPath\InvalidJsonException;
 use JsonPath\JsonObject;
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
-
+use JsonSchema\Exception\ExceptionInterface;
+use JsonSchema\Exception\InvalidSchemaException;
+use RootedData\Exception\SchemaException;
 use RootedData\Exception\ValidationException;
 use RootedData\Util\ErrorHelper;
+use RuntimeException;
 
 /**
  * RootedJsonData class. Instantiate for a service-like object for working with
@@ -28,45 +31,12 @@ class RootedJsonData
      *   String of JSON data.
      * @param string $schema
      *   JSON schema document for validation.
-     * @throws \JsonPath\InvalidJsonException
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (static::validateSchema($schema)) {
-            $this->schema = $schema;
-        }
-
-        $errors = static::validate($json, $this->schema);
-        if (!empty($errors)) {
-            throw new ValidationException("JSON Schema validation failed.", $errors);
-        }
-
+        $this->schema = $schema;
+        static::validate($json, $this->schema);
         $this->data = new JsonObject($json, true);
-    }
-
-    /**
-     * Validate JSON Schema.
-     *
-     * @param string $schema
-     *   JSON Schema string.
-     *
-     * @throws \JsonSchema\Exception\InvalidArgumentException
-     * @throws \JsonSchema\Exception\InvalidSchemaException
-     */
-    public static function validateSchema(string $schema): bool {
-        $decoded = json_decode($schema);
-        $emptyValue = new \stdClass();
-
-        $validator = new Validator();
-        $result = $validator->validate(
-            $emptyValue,
-            $decoded,
-            Constraint::CHECK_MODE_VALIDATE_SCHEMA|Constraint::CHECK_MODE_EXCEPTIONS
-        );
-        if ($result == Validator::ERROR_NONE) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -80,22 +50,29 @@ class RootedJsonData
      * @return array
      *   Validation errors array.
      */
-    public static function validate(string $json, string $schema): array
+    public static function validate(string $json, string $schema): void
     {
         $decoded = json_decode($json);
-
         if (!isset($decoded)) {
             throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
         
         $schema_decoded = json_decode($schema);
-        $validator = new Validator();
-        $validator->validate($decoded, $schema_decoded);
-
-        if ($validator->getErrorMask() === Validator::ERROR_NONE) {
-            return [];
+        if (!isset($schema_decoded)) {
+            throw new \InvalidArgumentException("Invalid JSON Schema: " . json_last_error_msg());
         }
-        return $validator->getErrors();
+
+        $validator = new Validator();
+        try {
+            // Catch any exceptions including schema exceptions.
+            $mask = Constraint::CHECK_MODE_VALIDATE_SCHEMA|Constraint::CHECK_MODE_EXCEPTIONS;
+            $validator->validate($decoded, $schema_decoded, $mask);
+        }
+        catch (ExceptionInterface $e) {
+            // Re-validate without exceptions, to capture all errors.
+            $validator->validate($decoded, $schema_decoded, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
+            ErrorHelper::handleErrors($e, $validator->getErrors());
+        }
     }
 
     /**
@@ -245,10 +222,10 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->remove($path, $field);
 
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
+        $errors = self::validate($validationJsonObject->getJson, $this->schema);
+        if (!empty($errors)) {
+            // $keywordArgs = $result->getFirstError()->keywordArgs();
+            // $message = "{$path} expects a {$keywordArgs['expected']}";
             throw new ValidationException($message, $result);
         }
 

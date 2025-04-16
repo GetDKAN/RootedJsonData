@@ -5,7 +5,7 @@ namespace RootedData\Exception;
 /**
  * Exception class to throw for RootedJsonData objects that fail validation.
  *
- * Passes along the Opis Json Schema validation result.
+ * Passes along the justinrainbow errors array.
  */
 class ValidationException extends \InvalidArgumentException
 {
