@@ -17,12 +17,12 @@ class ErrorHelper
      *
      * @param \JsonSchema\Exception\ExceptionInterface $e
      *   A justinrainbow JSON Schema library exception.
-     * @param array $errors 
+     * @param array $errors
      *   Validation errors array.
      *
-     * @throws \RootedData\Exception\SchemaException 
+     * @throws \RootedData\Exception\SchemaException
      *   If the schema is invalid.
-     * @throws \RootedData\Exception\ValidationException 
+     * @throws \RootedData\Exception\ValidationException
      *   If any other exception is passed.
      */
     public static function handleErrors(ExceptionInterface $e, array $errors): void
@@ -42,5 +42,4 @@ class ErrorHelper
 
         throw new ValidationException($message, $errors);
     }
-
 }
