@@ -1,9 +1,8 @@
 <?php
 
 
-namespace RootedDataTest;
+namespace RootedDataTest\Tests;
 
-use RootedData\Exception\InvalidSchemaException;
 use PHPUnit\Framework\TestCase;
 use RootedData\Exception\SchemaException;
 use RootedData\RootedJsonData;
