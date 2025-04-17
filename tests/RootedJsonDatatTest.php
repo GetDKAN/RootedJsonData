@@ -61,6 +61,7 @@ class RootedJsonDataTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
             $this->assertEquals("type", $e->getErrors()[0]['constraint']['name']);
+            $this->assertEquals($e->getErrors(), $e->getResult());
         }
     }
 
