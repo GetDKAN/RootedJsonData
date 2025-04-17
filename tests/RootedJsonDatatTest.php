@@ -108,7 +108,7 @@ class RootedJsonDataTest extends TestCase
 
     public function testJsonIntegrityFailureAfterChange(): void
     {
-        $this->expectExceptionMessage("\$.number expects a number");
+        $this->expectExceptionMessage("String value found, but a number is required");
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
@@ -122,7 +122,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testJsonIntegrityFailureMagicSetter(): void
     {
-        $this->expectExceptionMessage("\$.number expects a number");
+        $this->expectExceptionMessage("String value found, but a number is required");
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
@@ -237,7 +237,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testRemove(): void
     {
-        $json = '{"field1":"foo","field2":"bar",}';
+        $json = '{"field1":"foo","field2":"bar","field3":"baz"}';
         $schema = '
             {
                 "type": "object",

@@ -222,13 +222,7 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->remove($path, $field);
 
-        $errors = self::validate($validationJsonObject->getJson, $this->schema);
-        if (!empty($errors)) {
-            // $keywordArgs = $result->getFirstError()->keywordArgs();
-            // $message = "{$path} expects a {$keywordArgs['expected']}";
-            throw new ValidationException($message, $result);
-        }
-
+        self::validate($validationJsonObject, $this->schema);
         return $this->data->remove($path, $field);
     }
 
@@ -264,12 +258,7 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->add($path, $value, $field);
 
-        $errors = self::validate($validationJsonObject, $this->schema);
-        if (!empty($errors)) {
-            $message = "JSON Schema validation failed.";
-            throw new ValidationException($message, $errors);
-        }
-
+        self::validate($validationJsonObject, $this->schema);
         return $this->data->add($path, $value, $field);
     }
 }

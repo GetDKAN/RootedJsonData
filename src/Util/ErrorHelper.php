@@ -47,6 +47,10 @@ class ErrorHelper
         if ($e instanceof InvalidSchemaException) {
             throw new SchemaException("The JSON Schema is invalid.", $errors);
         }
-        throw new ValidationException("JSON Schema validation failed.", $errors);
+
+        $toperror = reset($errors);
+        $message = "JSON Schema validation failed: " . ($toperror['message'] ?? '');
+
+        throw new ValidationException($message, $errors);
     }
 }
