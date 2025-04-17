@@ -7,16 +7,12 @@ use JsonSchema\Exception\InvalidSchemaException;
 use RootedData\Exception\SchemaException;
 use RootedData\Exception\ValidationException;
 
+/**
+ * Helper class for handling errors from the justinrainbow JSON Schema library.
+ */
 class ErrorHelper
 {
-    public static function pathToJsonPath(string $path): string
-    {
-        // Convert the path to JSONPath format
-        $jsonPath = '$' . str_replace('/', '.', $path);
-        return $jsonPath;
-    }
-
-        /**
+    /**
      * Handle errors from the validator.
      *
      * @param \JsonSchema\Exception\ExceptionInterface $e
@@ -36,13 +32,6 @@ class ErrorHelper
             throw $e;
         }
 
-        // Iterate through the errors and add a JSON path based on the pointer.
-        foreach ($errors as $key => $error) {
-            if (isset($error['pointer'])) {
-                $errors[$key]['jsonpath'] = static::pathToJsonPath($error['pointer']);
-            }
-        }
-
         // Otherwise, throw our own exception that includes the error array.
         if ($e instanceof InvalidSchemaException) {
             throw new SchemaException("The JSON Schema is invalid.", $errors);
@@ -53,4 +42,5 @@ class ErrorHelper
 
         throw new ValidationException($message, $errors);
     }
+
 }

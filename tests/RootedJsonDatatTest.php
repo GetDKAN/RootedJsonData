@@ -67,8 +67,25 @@ class RootedJsonDataTest extends TestCase
 
     public function testJsonIntegrityFailureNested(): void
     {
-        $json = '{"number":"hello"}';
-        $schema = '{"type": "object","properties": {"number":{ "type": "number" }}}';
+        $json = '{"numbers":[{"number":"hello"}]}';
+        $schema = '
+            {
+                "type": "object",
+                "properties": {
+                    "numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "number": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ';
         try {
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
