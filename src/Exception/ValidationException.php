@@ -39,7 +39,7 @@ class ValidationException extends \InvalidArgumentException
     
     /**
      * Get the validation result object.
-     * 
+     *
      * @deprecated since 2.0.0, use :::getErrors() instead.
      *
      * @return array

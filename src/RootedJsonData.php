@@ -67,8 +67,7 @@ class RootedJsonData
             // Catch any exceptions including schema exceptions.
             $mask = Constraint::CHECK_MODE_VALIDATE_SCHEMA|Constraint::CHECK_MODE_EXCEPTIONS;
             $validator->validate($decoded, $schema_decoded, $mask);
-        }
-        catch (ExceptionInterface $e) {
+        } catch (ExceptionInterface $e) {
             // Re-validate without exceptions, to capture all errors.
             $validator->validate($decoded, $schema_decoded, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
             ErrorHelper::handleErrors($e, $validator->getErrors());
@@ -137,15 +136,7 @@ class RootedJsonData
         $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->set($path, $value);
-        $errors = self::validate($validationJsonObject->getJson(), $this->schema);
-        if (!empty($errors)) {
-            $first_error = reset($errors);
-            $path = ErrorHelper::pathToJsonPath($first_error['pointer']);
-            $expected = $first_error['constraint']['params']['expected'];
-            $message = "{$path} expects {$expected}";
-            throw new ValidationException($message, $errors);
-        }
-
+        self::validate($validationJsonObject->getJson(), $this->schema);
         return $this->data->set($path, $value);
     }
 

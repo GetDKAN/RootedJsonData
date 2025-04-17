@@ -19,7 +19,7 @@ class ErrorHelper
      *   A justinrainbow JSON Schema library exception.
      * @param array $errors 
      *   Validation errors array.
-     * 
+     *
      * @throws \RootedData\Exception\SchemaException 
      *   If the schema is invalid.
      * @throws \RootedData\Exception\ValidationException 
