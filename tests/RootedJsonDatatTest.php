@@ -60,7 +60,8 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getErrors()[0]['constraint']['name']);
+            $constraint = $e->getErrors()[0]['constraint'];
+            $this->assertEquals("type", $constraint['name'] ?? $constraint);
             $this->assertEquals($e->getErrors(), $e->getResult());
         }
     }
@@ -90,7 +91,8 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getErrors()[0]['constraint']['name']);
+            $constraint = $e->getErrors()[0]['constraint'];
+            $this->assertEquals("type", $constraint['name'] ?? $constraint);
         }
     }
 
