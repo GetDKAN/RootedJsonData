@@ -8,11 +8,7 @@ use JsonPath\JsonObject;
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 use JsonSchema\Exception\ExceptionInterface;
-use JsonSchema\Exception\InvalidSchemaException;
-use RootedData\Exception\SchemaException;
-use RootedData\Exception\ValidationException;
 use RootedData\Util\ErrorHelper;
-use RuntimeException;
 
 /**
  * RootedJsonData class. Instantiate for a service-like object for working with
