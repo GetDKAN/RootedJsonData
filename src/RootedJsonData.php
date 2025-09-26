@@ -14,7 +14,8 @@ use RootedData\Exception\ValidationException;
  * RootedJsonData class. Instantiate for a service-like object for working with
  * JSON.
  */
-class RootedJsonData {
+class RootedJsonData
+{
 
     private ?string $schema = null;
     private JsonObject $data;
@@ -28,7 +29,8 @@ class RootedJsonData {
      *   JSON schema document for validation.
      * @throws InvalidJsonException
      */
-    public function __construct(string $json = "{}", string $schema = "{}") {
+    public function __construct(string $json = "{}", string $schema = "{}")
+    {
         if (Schema::fromJsonString($schema)) {
             $this->schema = $schema;
         }
