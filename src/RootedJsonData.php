@@ -28,8 +28,7 @@ class RootedJsonData {
      *   JSON schema document for validation.
      * @throws InvalidJsonException
      */
-    public function __construct(string $json = "{}", string $schema = "{}")
-    {
+    public function __construct(string $json = "{}", string $schema = "{}") {
         if (Schema::fromJsonString($schema)) {
             $this->schema = $schema;
         }
