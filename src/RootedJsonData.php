@@ -14,8 +14,7 @@ use RootedData\Exception\ValidationException;
  * RootedJsonData class. Instantiate for a service-like object for working with
  * JSON.
  */
-class RootedJsonData
-{
+class RootedJsonData {
 
     private ?string $schema = null;
     private JsonObject $data;
