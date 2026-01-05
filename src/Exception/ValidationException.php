@@ -33,7 +33,7 @@ class ValidationException extends \InvalidArgumentException
             if (is_array($invalidValue) || is_object($invalidValue)) {
                 $invalidValue = json_encode($invalidValue);
             }
-            $message .= "\n {$i}) {$pointer}: {$invalidValue}";
+            $message .= "\n {$i}) {$pointer}: '{$invalidValue}'";
             $i++;
         }
         parent::__construct($message);
