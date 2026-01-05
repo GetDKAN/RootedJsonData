@@ -25,6 +25,14 @@ class ValidationException extends \InvalidArgumentException
     public function __construct(string $message, ValidationResult $validationResult)
     {
         $this->validationResult = $validationResult;
+        $errors = $validationResult->getErrors();
+        $i =1;
+        foreach ($errors as $error) {
+            $pointer = implode(" -> ", $error->dataPointer());
+            $invalidValue = $error->data();
+            $message .= "\n {$i}) {$pointer}: {$invalidValue}";
+            $i++;
+        }
         parent::__construct($message);
     }
 
