@@ -26,12 +26,15 @@ class ValidationException extends \InvalidArgumentException
     {
         $this->validationResult = $validationResult;
         $errors = $validationResult->getErrors();
-        $i =1;
+        $i = 1;
         foreach ($errors as $error) {
-            $pointer = implode(" -> ", $error->dataPointer());
-            (string) $invalidValue = $error->data();
-            $message .= "\n {$i}) {$pointer}: {$invalidValue}";
-            $i++;
+          $pointer = implode(" -> ", $error->dataPointer());
+          $invalidValue = $error->data();
+          if (is_array($invalidValue) || is_object($invalidValue)) {
+            $invalidValue = json_encode($invalidValue);
+          }
+          $message .= "\n {$i}) {$pointer}: {$invalidValue}";
+          $i++;
         }
         parent::__construct($message);
     }
