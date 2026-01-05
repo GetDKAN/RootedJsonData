@@ -28,11 +28,11 @@ class ValidationException extends \InvalidArgumentException
         $errors = $validationResult->getErrors();
         $i = 1;
         foreach ($errors as $error) {
-          $pointer = implode(" -> ", $error->dataPointer());
-          $invalidValue = $error->data();
-          if (is_array($invalidValue) || is_object($invalidValue)) {
-            $invalidValue = json_encode($invalidValue);
-          }
+            $pointer = implode(" -> ", $error->dataPointer());
+            $invalidValue = $error->data();
+            if (is_array($invalidValue) || is_object($invalidValue)) {
+                $invalidValue = json_encode($invalidValue);
+            }
           $message .= "\n {$i}) {$pointer}: {$invalidValue}";
           $i++;
         }
