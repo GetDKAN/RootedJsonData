@@ -29,7 +29,7 @@ class ValidationException extends \InvalidArgumentException
         $i =1;
         foreach ($errors as $error) {
             $pointer = implode(" -> ", $error->dataPointer());
-            $invalidValue = $error->data();
+            (string) $invalidValue = $error->data();
             $message .= "\n {$i}) {$pointer}: {$invalidValue}";
             $i++;
         }
