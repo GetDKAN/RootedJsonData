@@ -4,11 +4,11 @@ namespace RootedData;
 
 use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
-use Opis\JsonSchema\ValidationResult;
-use RootedData\Exception\ValidationException;
+use JsonSchema\Validator;
+use JsonSchema\Constraints\Constraint;
+use JsonSchema\Exception\ExceptionInterface;
+use RootedData\Util\ErrorHelper;
 
 /**
  * RootedJsonData class. Instantiate for a service-like object for working with
@@ -27,19 +27,11 @@ class RootedJsonData
      *   String of JSON data.
      * @param string $schema
      *   JSON schema document for validation.
-     * @throws InvalidJsonException
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
-            $this->schema = $schema;
-        }
-
-        $result = self::validate($json, $this->schema);
-        if (!$result->isValid()) {
-            throw new ValidationException("JSON Schema validation failed.", $result);
-        }
-
+        $this->schema = $schema;
+        static::validate($json, $this->schema);
         $this->data = new JsonObject($json, true);
     }
 
@@ -51,20 +43,31 @@ class RootedJsonData
      * @param string $schema
      *   JSON Schema string.
      *
-     * @return ValidationResult
-     *   Validation result object, contains error report if invalid.
+     * @return array
+     *   Validation errors array.
      */
-    public static function validate(string $json, string $schema): ValidationResult
+    public static function validate(string $json, string $schema): void
     {
         $decoded = json_decode($json);
-
         if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+            throw new \InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
+        }
+        
+        $schema_decoded = json_decode($schema);
+        if (!isset($schema_decoded)) {
+            throw new \InvalidArgumentException("Invalid JSON Schema: " . json_last_error_msg());
         }
 
-        $opiSchema = Schema::fromJsonString($schema);
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+        try {
+            // Catch any exceptions including schema exceptions.
+            $mask = Constraint::CHECK_MODE_VALIDATE_SCHEMA|Constraint::CHECK_MODE_EXCEPTIONS;
+            $validator->validate($decoded, $schema_decoded, $mask);
+        } catch (ExceptionInterface $e) {
+            // Re-validate without exceptions, to capture all errors.
+            $validator->validate($decoded, $schema_decoded, Constraint::CHECK_MODE_VALIDATE_SCHEMA);
+            ErrorHelper::handleErrors($e, $validator->getErrors());
+        }
     }
 
     /**
@@ -129,14 +132,7 @@ class RootedJsonData
         $this->normalizeSetValue($value);
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->set($path, $value);
-
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
-            throw new ValidationException($message, $result);
-        }
-
+        self::validate($validationJsonObject->getJson(), $this->schema);
         return $this->data->set($path, $value);
     }
 
@@ -213,13 +209,7 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->remove($path, $field);
 
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
-            throw new ValidationException($message, $result);
-        }
-
+        self::validate($validationJsonObject, $this->schema);
         return $this->data->remove($path, $field);
     }
 
@@ -255,12 +245,7 @@ class RootedJsonData
         $validationJsonObject = new JsonObject((string) $this->data);
         $validationJsonObject->add($path, $value, $field);
 
-        $result = self::validate($validationJsonObject, $this->schema);
-        if (!$result->isValid()) {
-            $message = "JSON Schema validation failed.";
-            throw new ValidationException($message, $result);
-        }
-
+        self::validate($validationJsonObject, $this->schema);
         return $this->data->add($path, $value, $field);
     }
 }

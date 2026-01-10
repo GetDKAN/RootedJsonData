@@ -1,12 +1,11 @@
 <?php
 
 
-namespace RootedDataTest;
+namespace RootedDataTest\Tests;
 
 use PHPUnit\Framework\TestCase;
+use RootedData\Exception\SchemaException;
 use RootedData\RootedJsonData;
-use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Exception\SchemaKeywordException;
 use RootedData\Exception\ValidationException;
 
 class RootedJsonDataTest extends TestCase
@@ -61,14 +60,46 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+            $constraint = $e->getErrors()[0]['constraint'];
+            $this->assertEquals("type", $constraint['name'] ?? $constraint);
+            $this->assertEquals($e->getErrors(), $e->getResult());
+        }
+    }
+
+    public function testJsonIntegrityFailureNested(): void
+    {
+        $json = '{"numbers":[{"number":"hello"}]}';
+        $schema = '
+            {
+                "type": "object",
+                "properties": {
+                    "numbers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "number": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ';
+        try {
+            new RootedJsonData($json, $schema);
+        } catch (ValidationException $e) {
+            $this->assertInstanceOf(ValidationException::class, $e);
+            $constraint = $e->getErrors()[0]['constraint'];
+            $this->assertEquals("type", $constraint['name'] ?? $constraint);
         }
     }
 
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity(): void
     {
-        $this->expectException(SchemaKeywordException::class);
+        $this->expectException(SchemaException::class);
         $json = '{"number":"hello"}';
         // Keyword "properties" should be an object not an array.
         $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
@@ -78,12 +109,13 @@ class RootedJsonDataTest extends TestCase
     // Schema is not even valid JSON
     public function testSchemaJsonIntegrity(): void
     {
-        $this->expectException(InvalidSchemaException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $json = '{"number":"hello"}';
         // Missing a closing bracket
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
     }
+    
 
     public function testJsonIntegrity(): void
     {
@@ -95,7 +127,7 @@ class RootedJsonDataTest extends TestCase
 
     public function testJsonIntegrityFailureAfterChange(): void
     {
-        $this->expectExceptionMessage("\$.number expects a number");
+        $this->expectExceptionMessage("String value found, but a number is required");
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
@@ -109,7 +141,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testJsonIntegrityFailureMagicSetter(): void
     {
-        $this->expectExceptionMessage("\$[number] expects a number");
+        $this->expectExceptionMessage("String value found, but a number is required");
 
         $json = '{"number":51}';
         $schema = '{"type":"object","properties": {"number":{ "type":"number"}}}';
@@ -224,7 +256,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testRemove(): void
     {
-        $json = '{"field1":"foo","field2":"bar"}';
+        $json = '{"field1":"foo","field2":"bar","field3":"baz"}';
         $schema = '
             {
                 "type": "object",
@@ -241,6 +273,7 @@ class RootedJsonDataTest extends TestCase
         $data = new RootedJsonData($json, $schema);
         $data->remove("$", "field2");
         $this->assertEquals("foo", $data->{"$.field1"});
+        $this->assertEquals(NULL, $data->{"$.field2"});
         $this->expectException(ValidationException::class);
         $data->remove("$", "field1");
     }

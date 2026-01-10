@@ -2,40 +2,51 @@
 
 namespace RootedData\Exception;
 
-use Opis\JsonSchema\ValidationResult;
-
 /**
  * Exception class to throw for RootedJsonData objects that fail validation.
  *
- * Passes along the Opis Json Schema validation result.
+ * Passes along the justinrainbow errors array.
  */
 class ValidationException extends \InvalidArgumentException
 {
     /**
-     * Validation result report.
+     * Validation errors.
      */
-    private ValidationResult $validationResult;
+    private array $errors;
 
     /**
      * @param string $message
      *   Exception message.
-     * @param ValidationResult $validationResult
+     * @param array $errors
      *   Validation result report.
      */
-    public function __construct(string $message, ValidationResult $validationResult)
+    public function __construct(string $message, array $errors)
     {
-        $this->validationResult = $validationResult;
+        $this->errors = $errors;
         parent::__construct($message);
     }
 
     /**
+     * Get the validation errors.
+     *
+     * @return array
+     *   Validation errors.
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+    
+    /**
      * Get the validation result object.
      *
-     * @return ValidationResult
-     *   Validation result report.
+     * @deprecated since 2.0.0, use :::getErrors() instead.
+     *
+     * @return array
+     *   Errors array.
      */
-    public function getResult(): ValidationResult
+    public function getResult(): array
     {
-        return $this->validationResult;
+        return $this->getErrors();
     }
 }
