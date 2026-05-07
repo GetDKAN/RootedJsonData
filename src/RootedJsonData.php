@@ -4,10 +4,11 @@ namespace RootedData;
 
 use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
+use Opis\JsonSchema\Errors\ValidationError;
 use Opis\JsonSchema\ValidationResult;
+use Opis\JsonSchema\Validator;
+use RootedData\Exception\InvalidSchemaException;
 use RootedData\Exception\ValidationException;
 
 /**
@@ -31,9 +32,14 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
-            $this->schema = $schema;
+        // Validate the schema string itself is parseable JSON. opis v2 dropped
+        // Schema::fromJsonString() (Schema is now an interface), so we parse here
+        // and surface a useful error before validation runs.
+        $decodedSchema = json_decode($schema, false);
+        if ($decodedSchema === null && $schema !== '{}') {
+            throw new InvalidSchemaException("Invalid JSON schema: " . json_last_error_msg());
         }
+        $this->schema = $schema;
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
@@ -62,9 +68,12 @@ class RootedJsonData
             throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
         }
 
-        $opiSchema = Schema::fromJsonString($schema);
+        // opis v2's Validator::validate() accepts the schema as a JSON string
+        // (it tries URI parsing first, then falls back to json_decode). For DKAN's
+        // schemas (always object literals starting with `{`), URI parsing fails
+        // and json_decode runs — equivalent to v1's Schema::fromJsonString() flow.
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+        return $validator->validate($decoded, $schema);
     }
 
     /**
@@ -132,8 +141,7 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
@@ -215,12 +223,40 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
         return $this->data->remove($path, $field);
+    }
+
+    /**
+     * Walk the v2 validation error tree to a leaf and format a path-prefixed message.
+     *
+     * v2's $result->error() returns the *container* error (e.g. keyword `properties`),
+     * while the actionable error (with the `expected` key for type mismatches) is on
+     * a leaf sub-error. For type mismatches we preserve the v1 message format
+     * "{path} expects a {type}"; for other keywords we fall back to the leaf message.
+     */
+    private static function buildPathErrorMessage(string $path, ValidationResult $result): string
+    {
+        $leaf = self::firstLeafError($result->error());
+        $args = $leaf->args();
+        if (isset($args['expected'])) {
+            return "{$path} expects a {$args['expected']}";
+        }
+        return "{$path}: " . $leaf->message();
+    }
+
+    /**
+     * Descend through subErrors() to the first leaf in a validation error tree.
+     */
+    private static function firstLeafError(ValidationError $error): ValidationError
+    {
+        while (!empty($subs = $error->subErrors())) {
+            $error = $subs[0];
+        }
+        return $error;
     }
 
     /**

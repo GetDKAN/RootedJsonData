@@ -4,10 +4,10 @@
 namespace RootedDataTest;
 
 use PHPUnit\Framework\TestCase;
-use RootedData\RootedJsonData;
-use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Exception\SchemaKeywordException;
+use Opis\JsonSchema\Exceptions\SchemaException;
+use RootedData\Exception\InvalidSchemaException;
 use RootedData\Exception\ValidationException;
+use RootedData\RootedJsonData;
 
 class RootedJsonDataTest extends TestCase
 {
@@ -61,14 +61,23 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+            // v2's root error is the *container* keyword (e.g. `properties`); walk to a leaf.
+            $rootError = $e->getResult()->error();
+            $leaf = $rootError;
+            while (!empty($subs = $leaf->subErrors())) {
+                $leaf = $subs[0];
+            }
+            $this->assertEquals("type", $leaf->keyword());
         }
     }
 
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity(): void
     {
-        $this->expectException(SchemaKeywordException::class);
+        // v2 throws Opis\JsonSchema\Exceptions\InvalidKeywordException (implements
+        // SchemaException). Catching the parent interface keeps the test stable
+        // across opis 2.x point releases.
+        $this->expectException(SchemaException::class);
         $json = '{"number":"hello"}';
         // Keyword "properties" should be an object not an array.
         $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
