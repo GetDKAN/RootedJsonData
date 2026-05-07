@@ -94,6 +94,46 @@ class RootedJsonDataTest extends TestCase
         new RootedJsonData($json, $schema);
     }
 
+    /**
+     * JSON Schema spec allows boolean schemas: `true` accepts everything.
+     */
+    public function testBooleanSchemaTrueAcceptsAll(): void
+    {
+        $data = new RootedJsonData('{"anything":[1,2,3]}', 'true');
+        $this->assertEquals([1, 2, 3], $data->get('$.anything'));
+    }
+
+    /**
+     * JSON Schema spec allows boolean schemas: `false` rejects everything.
+     */
+    public function testBooleanSchemaFalseRejectsAll(): void
+    {
+        $this->expectException(ValidationException::class);
+        new RootedJsonData('{"anything":1}', 'false');
+    }
+
+    /**
+     * Schemas that decode to non-object, non-boolean values (null, array, string,
+     * number) are spec violations and must be rejected at construction time.
+     */
+    public function testSchemaTypeRejection(): void
+    {
+        $cases = [
+            'null literal' => 'null',
+            'array' => '[]',
+            'string' => '"hello"',
+            'number' => '42',
+        ];
+        foreach ($cases as $label => $schema) {
+            try {
+                new RootedJsonData('{}', $schema);
+                $this->fail("Expected InvalidSchemaException for {$label} schema");
+            } catch (InvalidSchemaException $e) {
+                $this->assertStringContainsString('must be an object or boolean', $e->getMessage());
+            }
+        }
+    }
+
     public function testJsonIntegrity(): void
     {
         $json = '{"number":51}';
@@ -252,6 +292,37 @@ class RootedJsonDataTest extends TestCase
         $this->assertEquals("foo", $data->{"$.field1"});
         $this->expectException(ValidationException::class);
         $data->remove("$", "field1");
+    }
+
+    /**
+     * Non-`type` validation errors should produce a path-prefixed, interpolated message.
+     *
+     * Covers the fallback branch of buildPathErrorMessage() when the failing leaf
+     * keyword is something other than `type` (here: `required`). The message is
+     * formatted through opis ErrorFormatter so placeholders like {missing} are
+     * substituted with actual values.
+     */
+    public function testValidationFallbackMessageForRequiredKeyword(): void
+    {
+        $json = '{"field1":"foo","field2":"bar"}';
+        $schema = '{
+            "type":"object",
+            "required":["field1"],
+            "properties":{
+                "field1":{"type":"string"},
+                "field2":{"type":"string"}
+            }
+        }';
+        $data = new RootedJsonData($json, $schema);
+        try {
+            $data->remove("$", "field1");
+            $this->fail("Expected ValidationException for removing a required field");
+        } catch (ValidationException $e) {
+            $this->assertStringStartsWith('$: ', $e->getMessage());
+            $this->assertStringContainsString('required', $e->getMessage());
+            $this->assertStringContainsString('field1', $e->getMessage());
+            $this->assertStringNotContainsString('{missing}', $e->getMessage());
+        }
     }
 
     /**
