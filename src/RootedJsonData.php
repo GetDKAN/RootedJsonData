@@ -7,6 +7,7 @@ use JsonPath\InvalidJsonException;
 use JsonPath\JsonObject;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
+use Opis\JsonSchema\Exceptions\SchemaException;
 use Opis\JsonSchema\ValidationResult;
 use Opis\JsonSchema\Validator;
 use RootedData\Exception\InvalidSchemaException;
@@ -44,9 +45,34 @@ class RootedJsonData
             $type = $decodedSchema === null ? 'null' : gettype($decodedSchema);
             throw new InvalidSchemaException("JSON Schema must be an object or boolean, got {$type}");
         }
+
+        // Eagerly parse the schema via opis's loadObjectSchema (the high-level
+        // wrapper for parseRootSchema). This catches "shallow" structural
+        // errors at the schema root — e.g. non-string $schema, non-absolute
+        // $id — before any validation runs. Deeper errors are surfaced by
+        // self::validate() below; opis defers sub-schema parsing via
+        // LazySchema until the validator walks into them. Boolean schemas
+        // are trivially valid and skip this step.
+        if (is_object($decodedSchema)) {
+            try {
+                (new Validator())->loader()->loadObjectSchema($decodedSchema);
+            } catch (SchemaException $e) {
+                throw new InvalidSchemaException("Invalid JSON Schema: " . $e->getMessage(), 0, $e);
+            }
+        }
         $this->schema = $schema;
 
-        $result = self::validate($json, $this->schema);
+        // opis surfaces "deep" schema-structural errors (e.g. malformed
+        // sub-schemas under `properties`) during validation rather than parse,
+        // because parseRootSchema returns a LazySchema. Catch SchemaException
+        // here so callers see a single InvalidSchemaException for any "this
+        // isn't a valid JSON Schema" failure mode, regardless of when opis
+        // detects it.
+        try {
+            $result = self::validate($json, $this->schema);
+        } catch (SchemaException $e) {
+            throw new InvalidSchemaException("Invalid JSON Schema: " . $e->getMessage(), 0, $e);
+        }
         if (!$result->isValid()) {
             throw new ValidationException("JSON Schema validation failed.", $result);
         }

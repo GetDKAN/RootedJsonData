@@ -4,7 +4,7 @@
 namespace RootedDataTest;
 
 use PHPUnit\Framework\TestCase;
-use Opis\JsonSchema\Exceptions\SchemaException;
+use Opis\JsonSchema\Exceptions\ParseException;
 use RootedData\Exception\InvalidSchemaException;
 use RootedData\Exception\ValidationException;
 use RootedData\RootedJsonData;
@@ -74,14 +74,56 @@ class RootedJsonDataTest extends TestCase
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity(): void
     {
-        // v2 throws Opis\JsonSchema\Exceptions\InvalidKeywordException (implements
-        // SchemaException). Catching the parent interface keeps the test stable
-        // across opis 2.x point releases.
-        $this->expectException(SchemaException::class);
+        // Structural schema errors surface at construction time wrapped in
+        // our InvalidSchemaException. opis returns a LazySchema, so this
+        // particular error (properties as array) is detected during the
+        // validate() step rather than the loadObjectSchema step — both are
+        // caught and rewrapped uniformly.
+        $this->expectException(InvalidSchemaException::class);
+        $this->expectExceptionMessageMatches('/^Invalid JSON Schema: /');
         $json = '{"number":"hello"}';
         // Keyword "properties" should be an object not an array.
         $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
         new RootedJsonData($json, $schema);
+    }
+
+    /**
+     * Some structural schema errors are caught eagerly by loadObjectSchema()
+     * (the parseRootSchema wrapper) before any validation runs — covering
+     * the "shallow" catch branch in the constructor.
+     */
+    public function testEagerSchemaParseError(): void
+    {
+        try {
+            // $schema (the JSON Schema draft URI) must be a string. opis
+            // rejects this in parseRootSchema before returning a LazySchema.
+            new RootedJsonData('{}', '{"$schema": 42}');
+            $this->fail("Expected InvalidSchemaException for non-string \$schema");
+        } catch (InvalidSchemaException $e) {
+            $this->assertStringStartsWith('Invalid JSON Schema: ', $e->getMessage());
+            $this->assertInstanceOf(ParseException::class, $e->getPrevious());
+        }
+    }
+
+    /**
+     * Sub-schema structural errors surface via the validate() catch (deferred
+     * by opis's LazySchema). Confirms the *second* SchemaException catch in
+     * the constructor and that the original ParseException is preserved on
+     * the exception chain.
+     */
+    public function testSchemaParsedAtConstruction(): void
+    {
+        $json = '{}';
+        // "properties" must be an object, not a string. Surfaces lazily.
+        $schema = '{"type":"object","properties":"not-an-object"}';
+        try {
+            new RootedJsonData($json, $schema);
+            $this->fail("Expected InvalidSchemaException for structurally-invalid schema");
+        } catch (InvalidSchemaException $e) {
+            $this->assertStringStartsWith('Invalid JSON Schema: ', $e->getMessage());
+            // InvalidKeywordException extends ParseException — assertion holds either way.
+            $this->assertInstanceOf(ParseException::class, $e->getPrevious());
+        }
     }
 
     // Schema is not even valid JSON
