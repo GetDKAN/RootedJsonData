@@ -3,11 +3,12 @@
 
 namespace RootedDataTest;
 
+use Opis\JsonSchema\Exceptions\InvalidKeywordException;
 use PHPUnit\Framework\TestCase;
-use RootedData\RootedJsonData;
-use Opis\JsonSchema\Exception\InvalidSchemaException;
-use Opis\JsonSchema\Exception\SchemaKeywordException;
+use Opis\JsonSchema\Exceptions\ParseException;
+use RootedData\Exception\InvalidSchemaException;
 use RootedData\Exception\ValidationException;
+use RootedData\RootedJsonData;
 
 class RootedJsonDataTest extends TestCase
 {
@@ -48,7 +49,8 @@ class RootedJsonDataTest extends TestCase
     public function testJsonFormat(): void
     {
       // We want our data to keep its integrity in the in-betweens: From input to output.
-        $this->expectExceptionMessage("Invalid JSON: Syntax error");
+        $this->expectException(\JsonException::class);
+        $this->expectExceptionMessage("Syntax error");
         $json = "{";
         new RootedJsonData($json);
     }
@@ -61,28 +63,102 @@ class RootedJsonDataTest extends TestCase
             new RootedJsonData($json, $schema);
         } catch (ValidationException $e) {
             $this->assertInstanceOf(ValidationException::class, $e);
-            $this->assertEquals("type", $e->getResult()->getFirstError()->keyword());
+            // v2's root error is the *container* keyword (e.g. `properties`); walk to a leaf.
+            $rootError = $e->getResult()->error();
+            $leaf = $rootError;
+            while (!empty($subs = $leaf->subErrors())) {
+                $leaf = $subs[0];
+            }
+            $this->assertEquals("type", $leaf->keyword());
         }
     }
 
     // Schema does not follow JSON Schema spec
     public function testSchemaIntegrity(): void
     {
-        $this->expectException(SchemaKeywordException::class);
+        $this->expectException(InvalidKeywordException::class);
+        $this->expectExceptionMessageMatches('/^properties must be an object/');
         $json = '{"number":"hello"}';
         // Keyword "properties" should be an object not an array.
         $schema = '{"type":"object","properties":[{"number":{"type":"number"}}]}';
         new RootedJsonData($json, $schema);
     }
 
+    /**
+     * Catch an invalid schema in the v2 LazySchema parse.
+     */
+    public function testNonStringSchemaKeyword(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessageMatches('/^Schema draft must be a string/');
+        // $schema (the JSON Schema draft URI) must be a string. opis
+        // rejects this in parseRootSchema before returning a LazySchema.
+        new RootedJsonData('{}', '{"$schema": 42}');
+    }
+
+    /**
+     * Sub-schema structural errors surface via the validate() catch (deferred
+     * by opis's LazySchema).
+     */
+    public function testSchemaParsedAtConstruction(): void
+    {
+        $json = '{}';
+        // "properties" must be an object, not a string. Surfaces lazily.
+        $schema = '{"type":"object","properties":"not-an-object"}';
+
+        $this->expectException(InvalidKeywordException::class);
+        $this->expectExceptionMessageMatches('/^properties must be an object/');
+        new RootedJsonData($json, $schema);
+    }
+
     // Schema is not even valid JSON
     public function testSchemaJsonIntegrity(): void
     {
-        $this->expectException(InvalidSchemaException::class);
+        $this->expectException(\JsonException::class);
         $json = '{"number":"hello"}';
         // Missing a closing bracket
         $schema = '{"type":"object","properties":{"number":{"type":"number"}}';
         new RootedJsonData($json, $schema);
+    }
+
+    /**
+     * JSON Schema spec allows boolean schemas: `true` accepts everything.
+     */
+    public function testBooleanSchemaTrueAcceptsAll(): void
+    {
+        $data = new RootedJsonData('{"anything":[1,2,3]}', 'true');
+        $this->assertEquals([1, 2, 3], $data->get('$.anything'));
+    }
+
+    /**
+     * JSON Schema spec allows boolean schemas: `false` rejects everything.
+     */
+    public function testBooleanSchemaFalseRejectsAll(): void
+    {
+        $this->expectException(ValidationException::class);
+        new RootedJsonData('{"anything":1}', 'false');
+    }
+
+    /**
+     * Schemas that decode to non-object, non-boolean values (null, array, string,
+     * number) are spec violations and must be rejected at construction time.
+     */
+    public function testSchemaTypeRejection(): void
+    {
+        $cases = [
+            'null literal' => 'null',
+            'array' => '[]',
+            'string' => '"hello"',
+            'number' => '42',
+        ];
+        foreach ($cases as $label => $schema) {
+            try {
+                new RootedJsonData('{}', $schema);
+                $this->fail("Expected InvalidSchemaException for {$label} schema");
+            } catch (InvalidSchemaException $e) {
+                $this->assertStringContainsString('must be an object or boolean', $e->getMessage());
+            }
+        }
     }
 
     public function testJsonIntegrity(): void
@@ -95,6 +171,7 @@ class RootedJsonDataTest extends TestCase
 
     public function testJsonIntegrityFailureAfterChange(): void
     {
+        $this->expectException(ValidationException::class);
         $this->expectExceptionMessage("\$.number expects a number");
 
         $json = '{"number":51}';
@@ -109,6 +186,7 @@ class RootedJsonDataTest extends TestCase
      */
     public function testJsonIntegrityFailureMagicSetter(): void
     {
+        $this->expectException(ValidationException::class);
         $this->expectExceptionMessage("\$[number] expects a number");
 
         $json = '{"number":51}';
@@ -210,11 +288,22 @@ class RootedJsonDataTest extends TestCase
     public function testAddWithSchema(): void
     {
         $json = '{"numbers":["zero","one"]}';
-        $schema = '{"type": "object","properties":{"numbers":{"type":"array","items":{"type":"string"}}}}';
+        $schema = '{
+            "type": "object",
+            "properties": {
+                "numbers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }';
         $data = new RootedJsonData($json, $schema);
         $data->add("$.numbers", "two");
         $this->assertEquals("two", $data->{"$.numbers[2]"});
         $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("\$.numbers expects a string");
         $data->add("$.numbers", ["name" => "three", "value" => 3]);
     }
 
@@ -242,6 +331,27 @@ class RootedJsonDataTest extends TestCase
         $data->remove("$", "field2");
         $this->assertEquals("foo", $data->{"$.field1"});
         $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("$ expects a object");
+        $data->remove("$", "field1");
+    }
+
+    /**
+     * Non-`type` validation errors should produce a path-prefixed, interpolated message.
+     */
+    public function testValidationFallbackMessageForRequiredKeyword(): void
+    {
+        $json = '{"field1":"foo","field2":"bar"}';
+        $schema = '{
+            "type":"object",
+            "required":["field1"],
+            "properties":{
+                "field1":{"type":"string"},
+                "field2":{"type":"string"}
+            }
+        }';
+        $data = new RootedJsonData($json, $schema);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("$: The required properties (field1) are missing");
         $data->remove("$", "field1");
     }
 
@@ -269,6 +379,7 @@ class RootedJsonDataTest extends TestCase
         unset($data->{"$.field2"});
         $this->assertEquals("foo", $data->{"$.field1"});
         $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage("$ expects a object");
         unset($data->{"$.field1"});
     }
 }

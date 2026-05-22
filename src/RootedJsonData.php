@@ -2,12 +2,13 @@
 
 namespace RootedData;
 
-use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
-use Opis\JsonSchema\Schema;
-use Opis\JsonSchema\Validator;
 use JsonPath\JsonObject;
+use Opis\JsonSchema\Errors\ErrorFormatter;
+use Opis\JsonSchema\Errors\ValidationError;
 use Opis\JsonSchema\ValidationResult;
+use Opis\JsonSchema\Validator;
+use RootedData\Exception\InvalidSchemaException;
 use RootedData\Exception\ValidationException;
 
 /**
@@ -31,9 +32,17 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        if (Schema::fromJsonString($schema)) {
-            $this->schema = $schema;
+        $decodedSchema = json_decode($schema, false, 512, JSON_THROW_ON_ERROR);
+        if (is_object($decodedSchema)) {
+            (new Validator())->loader()->loadObjectSchema($decodedSchema);
+        } elseif (is_bool($decodedSchema)) {
+            (new Validator())->loader()->loadBooleanSchema($decodedSchema);
+        } else {
+            $type = $decodedSchema === null ? 'null' : gettype($decodedSchema);
+            throw new InvalidSchemaException("JSON Schema must be an object or boolean, got {$type}");
         }
+
+        $this->schema = $schema;
 
         $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
@@ -56,15 +65,10 @@ class RootedJsonData
      */
     public static function validate(string $json, string $schema): ValidationResult
     {
-        $decoded = json_decode($json);
-
-        if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
-        }
-
-        $opiSchema = Schema::fromJsonString($schema);
+        $decoded = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+        $decodedSchema = json_decode($schema, false, 512, JSON_THROW_ON_ERROR);
         $validator = new Validator();
-        return $validator->schemaValidation($decoded, $opiSchema);
+        return $validator->validate($decoded, $decodedSchema);
     }
 
     /**
@@ -132,8 +136,7 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
@@ -215,12 +218,36 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $keywordArgs = $result->getFirstError()->keywordArgs();
-            $message = "{$path} expects a {$keywordArgs['expected']}";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
         return $this->data->remove($path, $field);
+    }
+
+    /**
+     * Walk the validation error tree to a leaf and format a path-prefixed message.
+     */
+    private static function buildPathErrorMessage(string $path, ValidationResult $result): string
+    {
+        $leaf = self::firstLeafError($result->error());
+        $args = $leaf->args();
+        if (isset($args['expected'])) {
+            return "{$path} expects a {$args['expected']}";
+        }
+        $formatter = new ErrorFormatter();
+        return "{$path}: " . $formatter->formatErrorMessage($leaf);
+    }
+
+    /**
+     * Descend through subErrors() to the first leaf in a validation error tree.
+     */
+    private static function firstLeafError(ValidationError $error): ValidationError
+    {
+        while (!empty($subs = $error->subErrors())) {
+            $error = $subs[0];
+        }
+        return $error;
     }
 
     /**
@@ -257,7 +284,7 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $message = "JSON Schema validation failed.";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
