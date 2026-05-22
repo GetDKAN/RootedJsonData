@@ -2,12 +2,10 @@
 
 namespace RootedData;
 
-use InvalidArgumentException;
 use JsonPath\InvalidJsonException;
 use JsonPath\JsonObject;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
-use Opis\JsonSchema\Exceptions\SchemaException;
 use Opis\JsonSchema\ValidationResult;
 use Opis\JsonSchema\Validator;
 use RootedData\Exception\InvalidSchemaException;
@@ -34,45 +32,19 @@ class RootedJsonData
      */
     public function __construct(string $json = "{}", string $schema = "{}")
     {
-        // opis v2 dropped Schema::fromJsonString() (Schema is now an interface).
-        // Parse the schema here and reject anything that isn't a JSON object or
-        // boolean, matching the JSON Schema spec and v1's eager-rejection semantics.
-        $decodedSchema = json_decode($schema, false);
-        if (!is_object($decodedSchema) && !is_bool($decodedSchema)) {
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidSchemaException("Invalid JSON schema: " . json_last_error_msg());
-            }
+        $decodedSchema = json_decode($schema, false, 512, JSON_THROW_ON_ERROR);
+        if (is_object($decodedSchema)) {
+            (new Validator())->loader()->loadObjectSchema($decodedSchema);
+        } elseif (is_bool($decodedSchema)) {
+            (new Validator())->loader()->loadBooleanSchema($decodedSchema);
+        } else {
             $type = $decodedSchema === null ? 'null' : gettype($decodedSchema);
             throw new InvalidSchemaException("JSON Schema must be an object or boolean, got {$type}");
         }
 
-        // Eagerly parse the schema via opis's loadObjectSchema (the high-level
-        // wrapper for parseRootSchema). This catches "shallow" structural
-        // errors at the schema root — e.g. non-string $schema, non-absolute
-        // $id — before any validation runs. Deeper errors are surfaced by
-        // self::validate() below; opis defers sub-schema parsing via
-        // LazySchema until the validator walks into them. Boolean schemas
-        // are trivially valid and skip this step.
-        if (is_object($decodedSchema)) {
-            try {
-                (new Validator())->loader()->loadObjectSchema($decodedSchema);
-            } catch (SchemaException $e) {
-                throw new InvalidSchemaException("Invalid JSON Schema: " . $e->getMessage(), 0, $e);
-            }
-        }
         $this->schema = $schema;
 
-        // opis surfaces "deep" schema-structural errors (e.g. malformed
-        // sub-schemas under `properties`) during validation rather than parse,
-        // because parseRootSchema returns a LazySchema. Catch SchemaException
-        // here so callers see a single InvalidSchemaException for any "this
-        // isn't a valid JSON Schema" failure mode, regardless of when opis
-        // detects it.
-        try {
-            $result = self::validate($json, $this->schema);
-        } catch (SchemaException $e) {
-            throw new InvalidSchemaException("Invalid JSON Schema: " . $e->getMessage(), 0, $e);
-        }
+        $result = self::validate($json, $this->schema);
         if (!$result->isValid()) {
             throw new ValidationException("JSON Schema validation failed.", $result);
         }
@@ -93,19 +65,8 @@ class RootedJsonData
      */
     public static function validate(string $json, string $schema): ValidationResult
     {
-        $decoded = json_decode($json);
-
-        if (!isset($decoded)) {
-            throw new InvalidArgumentException("Invalid JSON: " . json_last_error_msg());
-        }
-
-        // Pre-decode the schema so opis v2 never sees a raw string. v2's
-        // Validator::validate() tries URI parsing on string schemas first, which
-        // would treat bare strings like "true", "false", or arbitrary identifiers
-        // as URI references — producing misleading "Schema not found" errors and
-        // (for URLs) attempting network fetches. Passing a decoded value bypasses
-        // that entire path.
-        $decodedSchema = json_decode($schema, false);
+        $decoded = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+        $decodedSchema = json_decode($schema, false, 512, JSON_THROW_ON_ERROR);
         $validator = new Validator();
         return $validator->validate($decoded, $decodedSchema);
     }
@@ -265,13 +226,7 @@ class RootedJsonData
     }
 
     /**
-     * Walk the v2 validation error tree to a leaf and format a path-prefixed message.
-     *
-     * v2's $result->error() returns the *container* error (e.g. keyword `properties`),
-     * while the actionable error (with the `expected` key for type mismatches) is on
-     * a leaf sub-error. For type mismatches we preserve the v1 message format
-     * "{path} expects a {type}"; for other keywords we fall back to the leaf message
-     * formatted via ErrorFormatter so placeholders like {missing} are interpolated.
+     * Walk the validation error tree to a leaf and format a path-prefixed message.
      */
     private static function buildPathErrorMessage(string $path, ValidationResult $result): string
     {
@@ -329,7 +284,7 @@ class RootedJsonData
 
         $result = self::validate($validationJsonObject, $this->schema);
         if (!$result->isValid()) {
-            $message = "JSON Schema validation failed.";
+            $message = self::buildPathErrorMessage($path, $result);
             throw new ValidationException($message, $result);
         }
 
